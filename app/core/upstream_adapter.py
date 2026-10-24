@@ -116,8 +116,7 @@ class UTFPRAdapter(UpstreamAuthAdapter):
             logger.warning("upstream.login.failed: status=%s login=%s", resp.status_code, login)
             raise InvalidCredentials("login ou senha inválidos")
 
-        # Sucesso: o sistemas2 aceitou a autenticação. A sessão fica no
-        # localStorage do navegador; o proxy apenas valida que o login foi aceito.
+        # Falha fechada: respostas >= 400 (ex.: 500, 502, timeout da universidade).
         if resp.status_code >= 400:
             logger.warning(
                 "upstream.login.failed: status=%s url=%s login=%s",
@@ -125,6 +124,31 @@ class UTFPRAdapter(UpstreamAuthAdapter):
                 str(resp.url),
                 login,
             )
+            raise InvalidCredentials("login ou senha inválidos")
+
+        # Sistemas2 pode retornar 200 mesmo com credenciais inválidas; verifica
+        # o corpo da resposta antes de aceitar.
+        try:
+            payload = resp.json()
+        except ValueError:
+            payload = {}
+
+        # Se o corpo indica erro (ex.: "invalid", "error", "credential") ou
+        # se não tem campos de sucesso, rejeita.
+        error_hint = str(payload).lower()
+        if any(
+            token in error_hint
+            for token in (
+                "invalid",
+                "error",
+                "fail",
+                "credential",
+                "login",
+                "senha",
+                "chave",
+            )
+        ):
+            logger.warning("upstream.login.failed: login=%s", login)
             raise InvalidCredentials("login ou senha inválidos")
 
         logger.info("upstream.login.success: login=%s", login)
