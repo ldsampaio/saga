@@ -1,0 +1,44 @@
+[project]
+name = "saga-auth-proxy"
+version = "0.1.0"
+description = "Proxy de autenticação delegada ao sistemas2 (UTFPR) para a Plataforma de Sistemas Acadêmicos (SAGA)"
+requires-python = ">=3.12"
+authors = [{ name = "lucas", email = "lucas@example.com" }]
+license = { text = "MIT" }
+
+dependencies = [
+    "fastapi>=0.115,<1.0",
+    "uvicorn[standard]>=0.30,<1.0",
+    "httpx>=0.28,<1.0",
+    "redis>=5.0,<6.0",
+    "pydantic>=2.9,<3.0",
+    "pydantic-settings>=2.5,<3.0",
+    "jinja2>=3.1,<4.0",
+    "cryptography>=44,<45",
+    "python-multipart>=0.0.9,<1.0",
+    "pytest>=8.3,<9.0",
+    "pytest-asyncio>=1.0,<2.0",
+    "ruff>=0.11,<1.0",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = ["tests/fixtures", ".venv"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "UP", "ARG", "BLE", "C4", "SIM", "TCH"]
+ignore = ["E501", "PLR0913", "SIM108"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+asyncio_mode = "auto"
+python_files = ["test_*.py"]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

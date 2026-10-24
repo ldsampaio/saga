@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SAGA — Login</title>
+  <style>
+    :root { --bg:#0f172a; --card:#1e293b; --text:#e2e8f0; --muted:#94a3b8; --accent:#38bdf8; --border:#334155; --bad:#f87171; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); display:flex; align-items:center; justify-content:center; min-height:100vh; }
+    .card { width:100%; max-width:420px; padding:24px; border:1px solid var(--border); border-radius:12px; background: var(--card); }
+    h1 { font-size:1.25rem; margin:0 0 6px; }
+    .sub { color: var(--muted); font-size:.9rem; margin-bottom:18px; }
+    .field { margin-bottom:14px; }
+    label { display:block; font-size:.85rem; color: var(--muted); margin-bottom:6px; }
+    input { width:100%; padding:10px 12px; border-radius:8px; border:1px solid var(--border); background:#0b1120; color:var(--text); font-size:1rem; }
+    input:focus { outline:2px solid var(--accent); border-color:transparent; }
+    button { width:100%; padding:11px; border:none; border-radius:8px; background: var(--accent); color:#0f172a; font-weight:600; font-size:1rem; cursor:pointer; }
+    button:disabled { background:#334155; cursor:not-allowed; }
+    .error { color: var(--bad); font-size:.85rem; margin-top:12px; display:none; }
+    .error.show { display:block; }
+    .state { margin-top:10px; font-size:.85rem; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>SAGA</h1>
+    <p class="sub">Login delegado ao sistemas2 (UTFPR)</p>
+    <form id="loginForm" novalidate>
+      <div class="field">
+        <label for="login">Login</label>
+        <input id="login" name="login" type="text" autocomplete="username" required autofocus>
+      </div>
+      <div class="field">
+        <label for="password">Senha</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required>
+      </div>
+      <button type="submit" id="submitBtn">Entrar</button>
+      <p class="error" id="error"></p>
+      <p class="state" id="state"></p>
+    </form>
+  </div>
+  <script>
+    const form = document.getElementById('loginForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const error = document.getElementById('error');
+    const state = document.getElementById('state');
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const payload = { login: form.login.value, password: form.password.value };
+      submitBtn.disabled = true;
+      error.classList.remove('show');
+      state.textContent = '';
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (res.status === 200) {
+          window.location.href = '/area';
+        } else if (res.status === 429) {
+          state.textContent = 'Muitas tentativas. Aguarde e tente novamente.';
+        } else if (res.status === 503) {
+          state.textContent = 'sistemas2 indisponível. Tente mais tarde.';
+        } else {
+          const data = await res.json().catch(() => ({}));
+          error.textContent = data.detail || 'Credenciais inválidas.';
+          error.classList.add('show');
+        }
+      } catch (err) {
+        state.textContent = 'Falha de conexão.';
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

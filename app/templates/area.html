@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>Área logada — SAGA</title>
+  <style>
+    :root { --bg:#0f172a; --card:#1e293b; --text:#e2e8f0; --muted:#94a3b8; --accent:#38bdf8; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); min-height:100vh; display:flex; flex-direction:column; }
+    header { display:flex; justify-content:space-between; align-items:center; padding:16px 24px; border-bottom:1px solid #334155; }
+    nav a { margin-left:12px; color: var(--muted); text-decoration:none; }
+    nav a:hover { color: var(--text); }
+    main { padding:24px; flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+    .info { margin-top:16px; color: var(--muted); font-size:.9rem; }
+  </style>
+</head>
+<body>
+  <header>
+    <strong>SAGA</strong>
+    <nav><a href="/">Voltar</a></nav>
+  </header>
+  <main>
+    <p style="color:var(--accent);font-size:1.1rem;">Área logada.</p>
+    <p class="info">Sessão validada. Chame os módulos da aplicação para consumir dados do sistemas2 (US-05).</p>
+    <form method="post" action="/api/auth/logout" style="margin-top:24px;">
+      <button type="submit">Sair</button>
+    </form>
+  </main>
+</body>
+</html>
