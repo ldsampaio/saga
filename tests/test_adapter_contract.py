@@ -106,12 +106,10 @@ class TestUTFPRAdapterReal:
             result = asyncio.run(adapter.authenticate("joao", "senha123"))
         assert result == {}
 
-    def test_authenticate_falha_sem_redirecionamento_lança_invalid(self):
+    def test_authenticate_falha_código_401_lança_invalid(self):
         adapter = UTFPRAdapter()
         fake = _FakeClient(
-            post_response=_FakeResponse(
-                200, "https://sistemas2.utfpr.edu.br/login", "Login ou senha inválidos"
-            )
+            post_response=_FakeResponse(401, "https://sistemas2.utfpr.edu.br/utfpr-auth/api/v1/")
         )
         with _patch_async_client(fake), pytest.raises(InvalidCredentials):
             asyncio.run(adapter.authenticate("joao", "senha123"))

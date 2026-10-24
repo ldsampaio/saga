@@ -85,34 +85,25 @@ class UTFPRAdapter(UpstreamAuthAdapter):
         self._timeout = float(_settings.UPSTREAM_FLOW_TIMEOUT) if _settings else 15.0
 
     async def authenticate(self, login: str, password: str) -> dict[str, str]:
+        # O sistemas2 expõe o fluxo de login em /utfpr-auth/api/v1/ (frontend
+        # Angular). O navegador faz POST JSON com os campos username/password
+        # e a universidade valida. O adaptador repete esse fluxo.
         url = (self._settings.UPSTREAM_LOGIN_URL if self._settings else
-               "https://sistemas2.utfpr.edu.br/login").rstrip("/")
+               "https://sistemas2.utfpr.edu.br/utfpr-auth/api/v1/").rstrip("/")
 
-        # 1) GET de referência (inicializa a sessão/aplicação SPA da universidade)
-        #    e prepara o contexto que o POST posterior espera.
         async with httpx.AsyncClient(cookies=httpx.Cookies(), timeout=self._timeout, verify=True) as ctx:
-            try:
-                await ctx.get(url, follow_redirects=False)
-            except httpx.RequestError as exc:
-                logger.warning("upstream.login.pre_refresh.error: login=%s", login)
-                raise UpstreamUnavailable("sistemas2 não respondeu") from exc
-
-            # 2) POST de login com o conteúdo que o sistemas2 aceita. O s2
-            #    não emite cookies e não retorna JSON de autenticação; a sessão
-            #    fica no localStorage. O POST é processado pela SPA e redireciona
-            #    para /home em caso de sucesso.
-            req_headers = {
-                "Accept": "application/json, text/plain, */*",
-                "Content-Type": "application/json",
-                "Referer": url,
-                "Origin": "https://sistemas2.utfpr.edu.br",
-                "X-Requested-With": "XMLHttpRequest",
-            }
             try:
                 resp = await ctx.post(
                     url,
                     json={"username": login, "password": password},
-                    headers=req_headers,
+                    headers={
+                        "Accept": "application/json, text/plain, */*",
+                        "Content-Type": "application/json",
+                        "Origin": "https://sistemas2.utfpr.edu.br",
+                        "Referer": "https://sistemas2.utfpr.edu.br/home",
+                        "X-Requested-With": "XMLHttpRequest",
+                        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:157.0) Gecko/20100101 Firefox/157.0",
+                    },
                     follow_redirects=True,
                 )
             except httpx.RequestError as exc:
@@ -125,9 +116,9 @@ class UTFPRAdapter(UpstreamAuthAdapter):
             logger.warning("upstream.login.failed: status=%s login=%s", resp.status_code, login)
             raise InvalidCredentials("login ou senha inválidos")
 
-        # Sucesso: o sistemas2 redireciona para a área do usuário (/home).
-        # O conteúdo da resposta não é JSON (sessão no localStorage).
-        if "/home" not in str(resp.url):
+        # Sucesso: o sistemas2 aceitou a autenticação. A sessão fica no
+        # localStorage do navegador; o proxy apenas valida que o login foi aceito.
+        if resp.status_code >= 400:
             logger.warning(
                 "upstream.login.failed: status=%s url=%s login=%s",
                 resp.status_code,
@@ -137,9 +128,6 @@ class UTFPRAdapter(UpstreamAuthAdapter):
             raise InvalidCredentials("login ou senha inválidos")
 
         logger.info("upstream.login.success: login=%s", login)
-        # Sessão upstream criada pela universidade (localStorage). O proxy
-        # não possui cookies HTTP e não persistir credenciais. Retorna vazio
-        # para cumprir o contrato do adaptador.
         return {}
 
     async def logout(self, cookies: dict[str, str]) -> None:  # noqa: ARG002
