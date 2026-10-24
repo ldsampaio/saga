@@ -89,16 +89,32 @@ class UTFPRAdapter(UpstreamAuthAdapter):
         url = (self._settings.UPSTREAM_LOGIN_URL if self._settings else
                "https://sistemas2.utfpr.edu.br/login").rstrip("/")
 
-        client = httpx.AsyncClient(cookies=httpx.Cookies(), timeout=self._timeout, verify=True)
-        try:
-            resp = await client.post(
-                url,
-                data={"username": login, "password": password},
-                headers={"Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"},
-                follow_redirects=True,
-            )
-        finally:
-            await client.aclose()
+        # 1) GET de referência (inicializa a sessão/aplicação SPA da universidade)
+        #    e prepara o contexto que o POST posterior espera.
+        async with httpx.AsyncClient(cookies=httpx.Cookies(), timeout=self._timeout, verify=True) as ctx:
+            try:
+                await ctx.get(url, follow_redirects=False)
+            except httpx.RequestError as exc:
+                logger.warning("upstream.login.pre_refresh.error: login=%s", login)
+                raise UpstreamUnavailable("sistemas2 não respondeu") from exc
+
+            # 2) POST de login (form-encoded) com os cabeçalhos do browser SPA.
+            req_headers = {
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                "Referer": url,
+                "Origin": "https://sistemas2.utfpr.edu.br",
+                "Upgrade-Insecure-Requests": "1",
+            }
+            try:
+                resp = await ctx.post(
+                    url,
+                    data={"username": login, "password": password},
+                    headers=req_headers,
+                    follow_redirects=True,
+                )
+            except httpx.RequestError as exc:
+                logger.warning("upstream.login.request.error: login=%s", login)
+                raise UpstreamUnavailable("sistemas2 não respondeu") from exc
 
         # Falha fechada: credenciais inválidas ou fluxo incompatível com o
         # sistemas2.
