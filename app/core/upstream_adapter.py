@@ -159,26 +159,35 @@ class UTFPRAdapter(UpstreamAuthAdapter):
         except ValueError:
             payload = {}
 
-        # Se o corpo indica erro (ex.: "invalid", "error", "credential") ou
-        # se não tem campos de sucesso, rejeita.
-        error_hint = str(payload).lower()
-        if any(
-            token in error_hint
-            for token in (
-                "invalid",
+        # Se o corpo for um dicionário que indica erro, rejeita.
+        if isinstance(payload, dict):
+            error_fields = {
                 "error",
+                "error_description",
+                "error_code",
+                "error_message",
+                "invalid",
                 "fail",
-                "credential",
-                "login",
-                "senha",
-                "chave",
-            )
-        ):
-            logger.warning("upstream.login.failed: login=%s", login)
-            raise InvalidCredentials("login ou senha inválidos")
+            }
+            error_hint = str(payload).lower()
+            if any(
+                token in error_hint
+                for token in (
+                    "invalid",
+                    "error",
+                    "fail",
+                    "not found",
+                    "credential",
+                    "user or password",
+                )
+            ):
+                logger.warning("upstream.login.failed: login=%s", login)
+                raise InvalidCredentials("login ou senha inválidos")
 
+        # Sessão do sistemas2 é validada: o upstream aceitou o login e
+        # retornou um token JWT físico (válido no localStorage da universidade).
         logger.info("upstream.login.success: login=%s", login)
-        return {}
+        return {"token": payload.get("token", "")}
 
     async def logout(self, cookies: dict[str, str]) -> None:  # noqa: ARG002
         logout_url = (self._settings.UPSTREAM_LOGOUT_URL if self._settings else "").rstrip("/")

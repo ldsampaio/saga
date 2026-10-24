@@ -37,7 +37,12 @@ class _FakeResponse:
         return self._url
 
     def json(self):
-        return {}
+        # Pega o corpo JSON do texto, se for um JSON válido
+        import json
+        try:
+            return json.loads(self.text)
+        except (ValueError, TypeError):
+            return {}
 
 
 class _FakeClient:
@@ -110,16 +115,18 @@ class TestUTFPRAdapterReal:
         with _patch_async_client(fake), pytest.raises(InvalidCredentials):
             asyncio.run(adapter.authenticate("login-errado", "senha-errada"))
 
-    def test_authenticate_sucesso_retorna_dicionario_vazio(self):
+    def test_authenticate_sucesso_retorna_dicionario_com_token(self):
         adapter = UTFPRAdapter()
         fake = _FakeClient(
             post_response=_FakeResponse(
-                200, "https://sistemas2.utfpr.edu.br/home", "<html>tela do usuário</html>"
+                200,
+                "https://sistemas2.utfpr.edu.br/home",
+                '{"token": "abc123"}',
             )
         )
         with _patch_async_client(fake):
             result = asyncio.run(adapter.authenticate("joao", "senha123"))
-        assert result == {}
+        assert result == {"token": "abc123"}
 
     def test_authenticate_falha_código_401_lança_invalid(self):
         adapter = UTFPRAdapter()
