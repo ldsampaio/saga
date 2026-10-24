@@ -98,17 +98,21 @@ class UTFPRAdapter(UpstreamAuthAdapter):
                 logger.warning("upstream.login.pre_refresh.error: login=%s", login)
                 raise UpstreamUnavailable("sistemas2 não respondeu") from exc
 
-            # 2) POST de login (form-encoded) com os cabeçalhos do browser SPA.
+            # 2) POST de login com o conteúdo que o sistemas2 aceita. O s2
+            #    não emite cookies e não retorna JSON de autenticação; a sessão
+            #    fica no localStorage. O POST é processado pela SPA e redireciona
+            #    para /home em caso de sucesso.
             req_headers = {
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                "Accept": "application/json, text/plain, */*",
+                "Content-Type": "application/json",
                 "Referer": url,
                 "Origin": "https://sistemas2.utfpr.edu.br",
-                "Upgrade-Insecure-Requests": "1",
+                "X-Requested-With": "XMLHttpRequest",
             }
             try:
                 resp = await ctx.post(
                     url,
-                    data={"username": login, "password": password},
+                    json={"username": login, "password": password},
                     headers=req_headers,
                     follow_redirects=True,
                 )
