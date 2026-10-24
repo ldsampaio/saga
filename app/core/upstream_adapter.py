@@ -108,7 +108,7 @@ class UTFPRAdapter(UpstreamAuthAdapter):
 
         # Sucesso: o sistemas2 redireciona para a área do usuário (/home).
         # O conteúdo da resposta não é JSON (sessão no localStorage).
-        if "/home" not in resp.url:
+        if "/home" not in str(resp.url):
             logger.warning(
                 "upstream.login.failed: status=%s url=%s login=%s",
                 resp.status_code,
