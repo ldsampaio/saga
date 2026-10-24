@@ -50,13 +50,28 @@ class _FakeClient:
         self._get_response = get_response or _FakeResponse(
             200, "https://sistemas2.utfpr.edu.br/home", "<html>tela do usuário</html>"
         )
-        self.cookies = cookies
+        # cookies: Mapping[str, str] opcional de cookies HTTP a retornar no POST
+        self._cookies = cookies or {}
+
+    @property
+    def cookies(self):
+        """Fake cookie jar: Mapping-like iterable de objetos Cookie."""
+        class _FakeCookie:
+            def __init__(self, name, value):
+                self.name = name
+                self.value = value
+
+        return (type("Cookie", (), {"name": n, "value": v})() for n, v in self._cookies.items())
 
     async def aclose(self):
         pass
 
     async def post(self, url, **kwargs):  # noqa: ARG002
         return self._post_response
+
+    async def __iter__(self):
+        for name, value in self._cookies.items():
+            yield type("Cookie", (), {"name": name, "value": value})()
 
     async def __aenter__(self):
         return self

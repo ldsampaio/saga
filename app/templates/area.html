@@ -20,8 +20,13 @@
     <nav><a href="/">Voltar</a></nav>
   </header>
   <main>
-    <p style="color:var(--accent);font-size:1.1rem;">Área logada.</p>
-    <p class="info">Sessão validada. Chame os módulos da aplicação para consumir dados do sistemas2 (US-05).</p>
+    {% if authenticated %}
+      <p style="color:var(--accent);font-size:1.1rem;">Área logada.</p>
+      <p class="info">Sessão validada. Usuário: {{ user_ref }}. Chame os módulos da aplicação para consumir dados do sistemas2 (US-05).</p>
+    {% else %}
+      <p style="color:var(--accent);font-size:1.1rem;">Não logado.</p>
+      <p class="info">Você não tem uma sessão ativa. <a href="/">Fazer login</a> para acessar a área.</p>
+    {% endif %}
     <form method="post" action="/api/auth/logout" style="margin-top:24px;">
       <button type="submit">Sair</button>
     </form>

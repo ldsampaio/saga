@@ -64,17 +64,7 @@ class UpstreamAuthAdapter(ABC):
 
 
 class UTFPRAdapter(UpstreamAuthAdapter):
-    """Adaptador UTFPR (sistemas2.utfpr.edu.br).
-
-    Contrato atualizado (T01/T04):
-    - O sistemas2 aceita POST ``application/x-www-form-urlencoded`` com
-      ``username`` + ``password`` (sem CSRF token).
-    - A sessão upstream é guardada no localStorage do navegador da
-      universidade (token, ultimoUsuario, horaLocalEmissao,
-      horaLocalExpiracao); **não emite cookies HTTP** e não retorna JSON
-      de autenticação. Logo, o proxy só valida que o login foi aceito e
-      depois cria a sessão local.
-    """
+    """Adaptador UTFPR (sistemas2.utfpr.edu.br)."""
 
     @property
     def name(self) -> str:
@@ -85,13 +75,40 @@ class UTFPRAdapter(UpstreamAuthAdapter):
         self._timeout = float(_settings.UPSTREAM_FLOW_TIMEOUT) if _settings else 15.0
 
     async def authenticate(self, login: str, password: str) -> dict[str, str]:
-        # O sistemas2 expõe o fluxo de login em /utfpr-auth/api/v1/ (frontend
-        # Angular). O navegador faz POST JSON com os campos username/password
-        # e a universidade valida. O adaptador repete esse fluxo.
-        url = (self._settings.UPSTREAM_LOGIN_URL if self._settings else
-               "https://sistemas2.utfpr.edu.br/utfpr-auth/api/v1/").rstrip("/")
+        # O sistemas2 exige uma sessão válida antes do POST no endpoint de
+        # login. Repetimos o fluxo do navegador Angular:
+        # 1) GET /login para inicializar o contexto SPA e capturar o cookie.
+        # 2) POST /utfpr-auth/api/v1/ com as credenciais e o cookie de sessão.
+        async with httpx.AsyncClient(
+            cookies=httpx.Cookies(), timeout=self._timeout, verify=True
+        ) as ctx:
+            # 1) REFERÊNCIA DO CONTEXTO SPA (igual ao GET realizado pelo
+            #    navegador na página de login). Isso inicializa os cookies
+            #    de sessão necessários para o endpoint de login.
+            await ctx.get(
+                (self._settings.UPSTREAM_BASE_URL if self._settings else
+                 "https://sistemas2.utfpr.edu.br").rstrip("/") + "/login",
+                headers={
+                    "User-Agent": (
+                        "Mozilla/5.0 (X11; Linux x86_64; rv:157.0) "
+                        "Gecko/20100101 Firefox/157.0"
+                    ),
+                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                    "Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7",
+                    "Accept-Encoding": "gzip, deflate, br, zstd",
+                    "Upgrade-Insecure-Requests": "1",
+                },
+                follow_redirects=True,
+            )
 
-        async with httpx.AsyncClient(cookies=httpx.Cookies(), timeout=self._timeout, verify=True) as ctx:
+            # 2) POST de login com credenciais, usando o cookie de sessão
+            #    obtido na referência acima.
+            url = (
+                self._settings.UPSTREAM_LOGIN_URL
+                if self._settings
+                else "https://sistemas2.utfpr.edu.br/utfpr-auth/api/v1/"
+            ).rstrip("/")
+
             try:
                 resp = await ctx.post(
                     url,
@@ -102,13 +119,22 @@ class UTFPRAdapter(UpstreamAuthAdapter):
                         "Origin": "https://sistemas2.utfpr.edu.br",
                         "Referer": "https://sistemas2.utfpr.edu.br/home",
                         "X-Requested-With": "XMLHttpRequest",
-                        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:157.0) Gecko/20100101 Firefox/157.0",
+                        "User-Agent": (
+                            "Mozilla/5.0 (X11; Linux x86_64; rv:157.0) "
+                            "Gecko/20100101 Firefox/157.0"
+                        ),
+                        "Cookie": "; ".join(
+                            f"{cookie.name}={cookie.value}"
+                            for cookie in ctx.cookies
+                        ),
                     },
                     follow_redirects=True,
                 )
             except httpx.RequestError as exc:
                 logger.warning("upstream.login.request.error: login=%s", login)
-                raise UpstreamUnavailable("sistemas2 não respondeu") from exc
+                raise UpstreamUnavailable(
+                    "sistemas2 não respondeu à requisição de login"
+                ) from exc
 
         # Falha fechada: credenciais inválidas ou fluxo incompatível com o
         # sistemas2.

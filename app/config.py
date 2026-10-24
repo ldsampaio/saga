@@ -19,7 +19,7 @@ class Settings(BaseSettings):
 
     # --- sistemas2 (UTFPR) ---
     UPSTREAM_BASE_URL: str = "https://sistemas2.utfpr.edu.br"
-    UPSTREAM_LOGIN_URL: str = "https://sistemas2.utfpr.edu.br/login"
+    UPSTREAM_LOGIN_URL: str = "https://sistemas2.utfpr.edu.br/utfpr-auth/api/v1/"
     UPSTREAM_LOGOUT_URL: str = ""
     UPSTREAM_SCAN_URL: str = ""
     UPSTREAM_SUCCESS_MARKERS: list[str] = []

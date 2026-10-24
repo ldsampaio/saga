@@ -6,7 +6,8 @@ import os
 from contextlib import asynccontextmanager
 
 import redis.asyncio as redis
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, Response
+from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
@@ -64,3 +65,38 @@ app.mount(
     name="static",
 )
 templates = Jinja2Templates(directory="app/templates")
+
+
+@app.get("/area", response_class=HTMLResponse)
+async def area_page(request: Request):
+    """Página da área autenticada (US-09). Mostra o status da sessão local:
+    - logada: renderiza a área com o user_ref;
+    - não logada: redireciona para o login com mensagem.
+    """
+    session_manager = request.app.state.session_manager
+    session_id = request.cookies.get(_Settings.SESSION_COOKIE_NAME)
+    authenticated = False
+    user_ref: str | None = None
+    if session_id:
+        payload = await session_manager.get(session_id)
+        if payload:
+            authenticated = True
+            user_ref = payload.get("user_ref")
+    if authenticated:
+        return templates.TemplateResponse(
+            request,
+            "area.html",
+            {"request": request, "authenticated": True, "user_ref": user_ref},
+        )
+    # Não logado: redireciona para o login ou mostra a página de login.
+    login_url = request.url.replace(path="", query="")
+    return templates.TemplateResponse(
+        request,
+        "area.html",
+        {"request": request, "authenticated": False, "login_url": str(login_url)},
+    )
+
+
+@app.get("/health/live", include_in_schema=False)
+async def health_live() -> Response:
+    return Response(status_code=200)
