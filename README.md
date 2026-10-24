@@ -81,8 +81,6 @@ docker compose up --build
 # app na porta 8000, redis na porta 6379
 ```
 
-### Variáveis de ambiente (produção)
-
 | Variável | Padrão | Descrição |
 |---|---|---|
 | `UPSTREAM_BASE_URL` | `https://sistemas2.utfpr.edu.br` | Base do sistemas2 |

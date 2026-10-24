@@ -6,11 +6,10 @@ bem-sucedida, retorna um dicionário vazio (sem cookies HTTP): a sessão
 upstream fica no localStorage da aplicação da universidade, inacessível
 ao proxy. Nenhuma credencial é persistida localmente.
 
-Fluxo (T01/T04): o sistemas2 expecta um POST
-``application/x-www-form-urlencoded`` na URL de login (campos
-``username`` e ``password``; sem CSRF). Sucesso = redirecionamento para
-``/home``. Falha = retorno de erro (401/403) ou página com "Login ou
-senha inválidos".
+Fluxo (T01/T04): o sistemas2 aceita POST ``application/json`` com
+      ``username`` + ``password`` (sem CSRF). O POST é interpretado pela SPA
+      angular e, em caso de sucesso, redireciona para ``/home``. Falha =
+      retorno de erro (401/403) ou página com "Login ou senha inválidos".
 """
 
 from __future__ import annotations

@@ -9,15 +9,19 @@
 
 ### 1.1 Fluxo de login
 - **URL de acesso**: `https://sistemas2.utfpr.edu.br/login`
-- **Fluxo HTTP**: GET → POST (`application/x-www-form-urlencoded`) → redirecionamento
-  (se credenciais OK, para `/home`). O login é um **Angular 7** (esqueleto),
-  e o formulário usa campos `username` (text) e `password` (password).
+- **Fluxo HTTP**: GET (`/login`, página SPA) → POST `/login`
+  (`application/json`, `Content-Type: application/json`, `X-Requested-With:
+  XMLHttpRequest`), redirecionamento para `/home` quando as credenciais são
+  aceitas. O login é um **Angular 7** (SPA), e o formulário usa campos
+  `username` (text) e `password` (password).
 - **CSRF token**: **nenhum** token CSRF na renderização; o envio usa só
   `username` + `password`. (Confirmação necessária com TI/DIRGTI.)
-- **Sucesso**: o `POST` retorna `200` e redireciona para `/home` (ou a rota
-  procure). A sessão fica guarda em `localStorage` do browser (see Session).
-- **Falha**: o `POST` retorna `200` e reinicia o formulário com mensagem de
-  erro (o servidor NÂO levanta 401/403; o adaptador detecta "vazio de cookie").
+- **Sucesso**: o `POST` retorna `302`/`200` com redirecionamento para `/home`
+  (ou a rota procure). A sessão fica guarda em `localStorage` do browser
+  (see Session).
+- **Falha**: o `POST` retorna `200` com a página de login re-renderizada e
+  mensagem de erro (o servidor NÃO levanta 401/403; o adaptador detecta
+  ausência de redirecionamento para `/home`).
 
 ### 1.2 Sessão upstream
 - **Mecanismo**: o s2 não usa cookies de sessão no padrão HTTP. A sessão é
