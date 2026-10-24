@@ -50,7 +50,7 @@
 ## 2. Entregável
 
 | Item | Estado |
-|---|---|
+|------|--------|
 | URL de login e fluxo | `https://sistemas2.utfpr.edu.br/login` (POST `username`+`password`, redirect OK) |
 | Campos do formulário | `username` (text), `password` (password) — **sem CSRF** |
 | CSRF token | Não há (ver 1.4) |
@@ -60,6 +60,7 @@
 | Endpoint de logout | Não definido; via JS `localStorage.clear()` + redirect |
 | URL barata de sondagem | `/home` (GET) |
 | Timeout típico | 15s |
+| API proxy (SAGA) | `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/auth/me` |
 
 ## 3. Risco institucional
 

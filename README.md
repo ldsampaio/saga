@@ -97,42 +97,54 @@ docker compose up --build
 | `REDIS_URL` | `redis://localhost:6379/0` | Redis |
 | `LOGIN_MAX_ATTEMPTS` / `LOGIN_WINDOW_SECONDS` | `5` / `300` | Rate limit |
 
-## 5. Fluxo de login (resumo)
+## 5. Rotas da API
 
-1. Usuário acessa `/` e preenche o form.
+| Método | Caminho | Descrição | Resposta |
+|--------|---------|-----------|----------|
+| `GET` | `/api/auth/` | Página de login (Jinja2) | `HTML` |
+| `POST` | `/api/auth/login` | Autentica no sistemas2, cria sessão local, retorna cookie `saga_session` | `JSON` + cookie |
+| `GET` | `/api/auth/me` | Retorna `user_ref` da sessão ativa | `JSON` |
+| `POST` | `/api/auth/logout` | Encerra sessão local e deleta cookie `saga_session` | `204 No Content` |
+| `GET` | `/api/auth/area` | Área logada (Jinja2) | `HTML` |
+
+## 6. Fluxo de login (resumo)
+
+1. Usuário acessa `/api/auth/` e preenche o form.
 2. `POST /api/auth/login` → `LoginService` chama o **UpstreamAuthAdapter**.
 3. O adaptador autentica no sistemas2 e retorna os **cookies upstream**.
-4. A sessão local é criada: `_Settings.SESSION_TTL_SECONDS` de TTL absoluto,
-   com criptografia Fernet sobre `{upstream_cookies, created_at, last_seen_at,
-   user_ref}`, guardada em Redis.
+4. A sessão local é criada: `SESSION_TTL_SECONDS` de TTL absoluto, com
+   criptografia Fernet sobre `{upstream_cookies, created_at, last_seen_at, user_ref}`, guardada em Redis.
 5. O cookie `saga_session` é retornado (`HttpOnly`, `Secure`, `SameSite=Lax`).
 6. Rotas protegidas validam local e acoplam: se o upstream quebrar, a sessão
    local é destruída (usando a URL barata de sondagem, T07).
 
-## 6. Pontos de atenção
+## 7. Pontos de atenção
 
 - **Nenhuma credencial é persistida**: o banco e os logs nunca guardam senha
   ou cookies upstream. A senha é descartada logo após o login.
 - **Memória:** a senha não é mantida além do necessário.
-- O **adaptador UTFPR** (T04) ainda é um placeholder até a T01.
+- O **adaptador UTFPR** (T04) já está implementado com integração real.
 - A tupla `UPSTREAM_LOGOUT_URL`, `UPSTREAM_SCAN_URL` e a confirmação
   institucional (**TI/DIRGTI**) dependem da T01.
 
-## 7. Status das tarefas
+## 8. Status das tarefas
 
 | Tarefa | Descrição | Status |
-|---|---|---|
-| T01 | Descoberta	do sistemas2 (research.md) | Aberta |
+|--------|------|--------|
+| T01 | Descoberta do sistemas2 (research.md) | Aberta |
 | T02 | Scaffold do repositório, compose, lint, CI | Feito |
 | T03 | Interface UpstreamAuth e mock | Feito |
-| T04 | Adapter UTFPR (fixture de respostas) | Placeholder |
+| T04 | Adapter UTFPR com integração real | Feito |
 | T05 | Session Manager + criptografia + testes unitários | Feito |
 | T06 | Endpoint /login, redação de logs, rate limit | Feito |
-| T07 | Middleware de autenticação e acoplamento | Em andamento |
+| T07 | Middleware de autenticação e acoplamento | Feito |
 | T08 | /logout e /me | Feito |
 | T09 | Frontend de login + tratamento de estados | Feito |
 | T10 | Testes de segurança (senhas fora de logs/banco/store) | Pendente |
 | T11 | Documentação operacional / runbook | Pendente |
 
-> **Atenção:** `UPSTREAM_SCAN_URL`, `UPSTREAM_LOGOUT_URL` e a confirmação
-> institucional (TI/DIRGTI) são condicionais à conclusão da T01.
+## 9. Risco institucional
+
+Confirmar com a UTFPR (TI/DIRGTI) se a integração por cookies HTTP está
+permitida nos Termos de Uso. Se houver uma opção federada oficial, ela deve
+ser preferida ao adapter HTTP puro.

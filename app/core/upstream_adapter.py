@@ -11,9 +11,10 @@ Está isolado atrás de uma interface, o que o torna mockável para testes.
 
 from __future__ import annotations
 
-import httpx
 import http.cookiejar
 from abc import ABC, abstractmethod
+
+import httpx
 
 
 class UpstreamAuthError(Exception):
