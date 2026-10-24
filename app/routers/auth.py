@@ -19,7 +19,7 @@ from starlette.status import (
 )
 
 from app.config import get_settings
-from app.models import LoginRequest
+from app.models import LoginRequest  # noqa: F401,TC001
 
 _Settings = get_settings()
 router = APIRouter(prefix="/api/auth", tags=["auth"])

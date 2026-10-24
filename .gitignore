@@ -16,6 +16,23 @@ env/
 secrets/
 .secret_key
 
+# Logs da aplicação (produce o arquivo de registro de auditoria)
+logs/
+
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Secrets (nunca versionar)
+.env
+.env.*
+!.env.example
+*.key
+secrets/
+.secret_key
+
 # OS / editor
 .DS_Store
 Thumbs.db

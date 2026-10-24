@@ -1,0 +1,75 @@
+# Runbook — SAGA (Auth Proxy)
+
+Guia de operação da aplicação **SAGA** (proxy de autenticação delegada ao
+sistemas2.utfpr.edu.br). Fase 1: proxy de autenticação (T01–T07).
+
+## 1. Pré-requisitos
+
+- Docker + Docker Compose (rede: app + redis)
+- Chave `SESSION_SECRET_KEY` (>= 32 bytes, prod) e `UPSTREAM_BASE_URL` (prod)
+- Credenciais do sistemas2 via **Hermes vault** (nunca persistidas em disco)
+
+## 2. Iniciando
+
+### Desenvolvimento
+
+```bash
+cd ~/Documentos/Projetos/saga
+uv venv .venv
+source .venv/bin/activate
+uv pip install -r requirements.txt
+cp .env.example .env   # preencher SESSION_SECRET_KEY e SAGA_LOG_FILE (opcional)
+redis-server --port 6379 &
+uv run uvicorn app.main:app --reload --port 8000
+```
+
+Ver log de aplicação: `cat logs/saga.log` (criado em `logs/saga.log`).
+
+### Produção (Docker Compose)
+
+```bash
+cd ~/Documentos/Projetos/saga
+docker compose up --build -d
+```
+
+- API: `http://localhost:8000`
+- Redis: `localhost:6379`
+- Logs rotativos: `logs/saga.log` (mount `./logs:/app/logs` no compose);
+  variável `SAGA_LOG_FILE` para override (ex.: `/var/log/saga/saga.log`).
+
+## 3. Verificando o serviço
+
+```bash
+docker compose ps                # contêineres
+docker compose logs -f app       # logs em tempo real
+curl -s http://localhost:8000/api/auth/me     # sem sessão -> 401
+```
+
+## 4. Fluxo de login (resumo)
+
+1. `POST /api/auth/login` (JSON `{"login": "...", "password": "..."}`).
+2. `LoginService` chama o `UTFPRAdapter` (sistemas2):
+   - POST `application/x-www-form-urlencoded` (`username`+`password`) na URL
+     de login;
+   - sucesso = redirecionamento para `/home` (sessão criada na universidade);
+   - falha = 401/403 ou página de erro → `InvalidCredentials`.
+3. Em sucesso, cria sessão local (`saga_session` cookie, Fernet,
+   TTL 3600s / inatividade 900s) e retorna 200.
+4. `GET /api/auth/me` retorna `user_ref`; `POST /logout` invalida.
+
+## 5. Log de erros
+
+- Console (stdout) + arquivo `logs/saga.log` (RotatingFileHandler, 10 MB,
+  5 backups).
+- Variável de ambiente `SAGA_LOG_FILE` override.
+- Nível: `INFO` (configurável via `SAGA_LOG_LEVEL` — não aplicável; nível
+  fixo `INFO` para a aplicação; os logs de nivel debug só no código).
+
+## 6. Teste
+
+```bash
+cd ~/Documentos/Projetos/saga
+.venv/bin/pytest tests/ -q -p no:cacheprovider
+```
+
+Suite: 24 testes (session store, auth service, adapter contract).

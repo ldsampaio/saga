@@ -111,18 +111,26 @@ docker compose up --build
 
 1. Usuário acessa `/api/auth/` e preenche o form.
 2. `POST /api/auth/login` → `LoginService` chama o **UpstreamAuthAdapter**.
-3. O adaptador autentica no sistemas2 e retorna os **cookies upstream**.
-4. A sessão local é criada: `SESSION_TTL_SECONDS` de TTL absoluto, com
-   criptografia Fernet sobre `{upstream_cookies, created_at, last_seen_at, user_ref}`, guardada em Redis.
-5. O cookie `saga_session` é retornado (`HttpOnly`, `Secure`, `SameSite=Lax`).
-6. Rotas protegidas validam local e acoplam: se o upstream quebrar, a sessão
+3. O adaptador verifica se as credenciais são válidas no sistemas2. A
+   universidade é a **fonte da verdade**; o sistemas2 não emite cookies HTTP
+   (a sessão fica no localStorage do navegador). O proxy **não** persiste
+   credenciais e **não** mantém o usuário logado via backend no sistemas2
+   — o login da universidade é apenas a porta de entrada.
+4. Em sucesso, cria uma sessão local: `SESSION_TTL_SECONDS` (TTL absoluto),
+   `SESSION_INACTIVITY_TTL_SECONDS` (inatividade), criptografia Fernet sobre
+   `{upstream_cookies, created_at, last_seen_at, user_ref}`, guardada em
+   Redis. O cookie `saga_session` é retornado (`HttpOnly`, `Secure`,
+   `SameSite=Lax`).
+5. Rotas protegidas validam a sessão local. Se o upstream quebrar, a sessão
    local é destruída (usando a URL barata de sondagem, T07).
 
 ## 7. Pontos de atenção
 
-- **Nenhuma credencial é persistida**: o banco e os logs nunca guardam senha
-  ou cookies upstream. A senha é descartada logo após o login.
-- **Memória:** a senha não é mantida além do necessário.
+- **Nenhuma credencial é persistida**: o banco e os logs nunca guardam
+  senha ou cookies upstream. A senha é descartada logo após o login.
+- **Observabilidade**: logs para console (stdout) e arquivo rotativo
+  `logs/saga.log` (10 MB, 5 backups). Prod: variável `SAGA_LOG_FILE`
+  (ex.: `/var/log/saga/saga.log` montado via volume no Docker Compose).
 - O **adaptador UTFPR** (T04) já está implementado com integração real.
 - A tupla `UPSTREAM_LOGOUT_URL`, `UPSTREAM_SCAN_URL` e a confirmação
   institucional (**TI/DIRGTI**) dependem da T01.
@@ -136,12 +144,12 @@ docker compose up --build
 | T03 | Interface UpstreamAuth e mock | Feito |
 | T04 | Adapter UTFPR com integração real | Feito |
 | T05 | Session Manager + criptografia + testes unitários | Feito |
-| T06 | Endpoint /login, redação de logs, rate limit | Feito |
-| T07 | Middleware de autenticação e acoplamento | Feito |
-| T08 | /logout e /me | Feito |
-| T09 | Frontend de login + tratamento de estados | Feito |
-| T10 | Testes de segurança (senhas fora de logs/banco/store) | Pendente |
-| T11 | Documentação operacional / runbook | Pendente |
+|| T06 | Endpoint /login, redação de logs, rate limit | Feito |
+|| T07 | Middleware de autenticação e acoplamento | Feito |
+|| T08 | /logout e /me | Feito |
+|| T09 | Frontend de login + tratamento de estados | Feito |
+|| T10 | Testes de segurança (senhas fora de logs/banco/store) | Pendente |
+|| T11 | Documentação operacional / runbook | Feito |
 
 ## 9. Risco institucional
 

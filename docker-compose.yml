@@ -10,9 +10,6 @@ services:
     environment:
       - SESSION_SECRET_KEY=${SESSION_SECRET_KEY:-}
       - UPSTREAM_BASE_URL=${UPSTREAM_BASE_URL:-https://sistemas2.utfpr.edu.br}
-      - UPSTREAM_LOGIN_URL=${UPSTREAM_LOGIN_URL:-}
-      - UPSTREAM_LOGOUT_URL=${UPSTREAM_LOGOUT_URL:-}
-      - UPSTREAM_SCAN_URL=${UPSTREAM_SCAN_URL:-}
       - UPSTREAM_FLOW_TIMEOUT=15
       - SESSION_TTL_SECONDS=3600
       - SESSION_INACTIVITY_TTL_SECONDS=900
@@ -23,6 +20,7 @@ services:
     restart: unless-stopped
     volumes:
       - saga_secrets:/run/secrets
+      - ./logs:/app/logs
 
   redis:
     image: redis:7-alpine

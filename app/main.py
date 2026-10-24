@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from contextlib import asynccontextmanager
 
 import redis.asyncio as redis
@@ -14,8 +15,18 @@ from app.core.session_manager import SessionManager
 from app.core.session_store import RedisSessionStore
 from app.core.upstream_adapter import adapter_from_settings
 from app.core.upstream_client import UpstreamClient
+
+# --- Observabilidade: console + arquivo rotativo (antes demais módulos) ---
+from app.logger import configure_logging
 from app.routers import auth
 from app.services.auth_service import LoginService, RateLimiter
+
+configure_logging(
+    log_file=os.environ.get(
+        "SAGA_LOG_FILE",
+        os.path.join(os.getcwd(), "logs", "saga.log"),
+    ),
+)
 
 _Settings = get_settings()
 

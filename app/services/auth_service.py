@@ -10,6 +10,7 @@ Regras:
 from __future__ import annotations
 
 import asyncio
+import logging
 import time
 from typing import TYPE_CHECKING
 
@@ -30,6 +31,8 @@ from app.core.upstream_adapter import (
     UpstreamAuthAdapter,
     UpstreamUnavailable,
 )
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from fastapi import Request
@@ -99,10 +102,12 @@ class LoginService:
         try:
             upstream_cookies = await self._adapter.authenticate(login, password)
         except InvalidCredentials:
+            logger.warning("auth.login.invalid: client_ip=%s login=%s", client_ip, login)
             return JSONResponse(
                 {"detail": "Login ou senha inválidos."}, status_code=HTTP_401_UNAUTHORIZED
             )
-        except UpstreamUnavailable:
+        except UpstreamUnavailable as exc:
+            logger.error("upstream.unavailable: error=%s", str(exc))
             return JSONResponse(
                 {"detail": "Serviço do sistemas2 indisponível."},
                 status_code=HTTP_503_SERVICE_UNAVAILABLE,
@@ -111,20 +116,23 @@ class LoginService:
             return JSONResponse(
                 {"detail": "Sessão upstream inválida."}, status_code=HTTP_401_UNAUTHORIZED
             )
-        except httpx.RequestError:
+        except httpx.RequestError as exc:
+            logger.error("upstream.request_error: error=%s", str(exc))
             return JSONResponse(
                 {"detail": "Erro ao autenticar. Tente mais tarde."},
                 status_code=HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
-        if not await self._adapter.is_session_alive(upstream_cookies):
-            return JSONResponse(
-                {"detail": "Sessão upstream inválida."},
-                status_code=HTTP_401_UNAUTHORIZED,
-            )
-
+        # Autenticação aceite no sistemas2 → sessão upstream criada (fica no
+        # localStorage da universidade). Não há cookies HTTP a retornar.
         user_ref = self._infer_user_ref(login)
         session_id = await self._session_manager.create(upstream_cookies, user_ref)
+        logger.info(
+            "auth.login.success: session_id=%s user_ref=%s login=%s",
+            session_id[:8],
+            user_ref,
+            login,
+        )
 
         response = Response(status_code=200)
         response.set_cookie(

@@ -1,20 +1,26 @@
 """Adaptador de autenticação junto ao sistemas2 (UTFPR).
 
-O adaptador encapsula todo o conhecimento sobre o fluxo do sistemas2:
-- URLs e campos do formulário;
-- deteção de sucesso/falha;
-- endpoint de logout;
-- comportamento de expiração.
+O adaptador verifica se as credenciais do usuário são válidas no sistemas2
+(universidade é a fonte da verdade). Se a autenticação no sistemas2 for
+bem-sucedida, retorna um dicionário vazio (sem cookies HTTP): a sessão
+upstream fica no localStorage da aplicação da universidade, inacessível
+ao proxy. Nenhuma credencial é persistida localmente.
 
-Está isolado atrás de uma interface, o que o torna mockável para testes.
+Fluxo (T01/T04): o sistemas2 expecta um POST
+``application/x-www-form-urlencoded`` na URL de login (campos
+``username`` e ``password``; sem CSRF). Sucesso = redirecionamento para
+``/home``. Falha = retorno de erro (401/403) ou página com "Login ou
+senha inválidos".
 """
 
 from __future__ import annotations
 
-import http.cookiejar
+import logging
 from abc import ABC, abstractmethod
 
 import httpx
+
+logger = logging.getLogger(__name__)
 
 
 class UpstreamAuthError(Exception):
@@ -22,8 +28,7 @@ class UpstreamAuthError(Exception):
 
 
 class InvalidCredentials(UpstreamAuthError):  # noqa: N818
-    """Login ou senha inválidos (HTTP 401)."""
-
+    """Login ou senha inválidos (HTTP 401/403)."""
 
 
 class UpstreamUnavailable(UpstreamAuthError):  # noqa: N818
@@ -31,7 +36,7 @@ class UpstreamUnavailable(UpstreamAuthError):  # noqa: N818
 
 
 class SessionExpired(UpstreamAuthError):  # noqa: N818
-    """sistemas2 invalidou a sessão (401/403/redireciona para o login)."""
+    """sessão upstream expirada ou inválida."""
 
 
 class UpstreamAuthAdapter(ABC):
@@ -42,9 +47,12 @@ class UpstreamAuthAdapter(ABC):
 
     @abstractmethod
     async def authenticate(self, login: str, password: str) -> dict[str, str]:
-        """Autentica e retorna o dicionário de cookies do upstream.
+        """Autentica no sistemas2.
 
         Lança :class:`InvalidCredentials` ou :class:`UpstreamUnavailable`.
+        Retorna {} quando a autenticação foi aceita (a sessão upstream fica
+        no localStorage da universidade; o proxy não tem acesso aos cookies
+        HTTP).
         """
 
     @abstractmethod
@@ -59,16 +67,14 @@ class UpstreamAuthAdapter(ABC):
 class UTFPRAdapter(UpstreamAuthAdapter):
     """Adaptador UTFPR (sistemas2.utfpr.edu.br).
 
-    Fluxo real verificado em S03 (login com credenciais v&aacute;lidas):
-    - POST https://sistemas2.utfpr.edu.br/login com campos ``username`` e
-      ``password`` (nenhum CSRF token na forma de envio).
-    - A resposta redireciona e o sistema insere os cookies de sess&atilde;o no
-      client HTTP (jar isolado por sess&atilde;o).
-    - A sess&atilde;o termina quando o usu&aacute;rio sai (localStorage) ou o
-      token expira (configurado em ~3h 59min).
-    - N&atilde;o h&aacute; CSRF token na forma de envio.
-
-    Exporta :attr:`name == "utfpr.gateway"`.
+    Contrato atualizado (T01/T04):
+    - O sistemas2 aceita POST ``application/x-www-form-urlencoded`` com
+      ``username`` + ``password`` (sem CSRF token).
+    - A sessão upstream é guardada no localStorage do navegador da
+      universidade (token, ultimoUsuario, horaLocalEmissao,
+      horaLocalExpiracao); **não emite cookies HTTP** e não retorna JSON
+      de autenticação. Logo, o proxy só valida que o login foi aceito e
+      depois cria a sessão local.
     """
 
     @property
@@ -80,53 +86,63 @@ class UTFPRAdapter(UpstreamAuthAdapter):
         self._timeout = float(_settings.UPSTREAM_FLOW_TIMEOUT) if _settings else 15.0
 
     async def authenticate(self, login: str, password: str) -> dict[str, str]:
-        url = (self._settings.UPSTREAM_LOGIN_URL if self._settings else "https://sistemas2.utfpr.edu.br/login").rstrip("/")
+        url = (self._settings.UPSTREAM_LOGIN_URL if self._settings else
+               "https://sistemas2.utfpr.edu.br/login").rstrip("/")
 
-        # HTTP client com cookie jar do Python stdlib para manter a sessão
-        jar = http.cookiejar.CookieJar()
-        client = httpx.AsyncClient(cookies=jar, timeout=self._timeout, verify=True)
-
+        client = httpx.AsyncClient(cookies=httpx.Cookies(), timeout=self._timeout, verify=True)
         try:
             resp = await client.post(
                 url,
                 data={"username": login, "password": password},
+                headers={"Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"},
                 follow_redirects=True,
             )
         finally:
             await client.aclose()
 
-        if resp.status_code in {401, 403}:
-            raise InvalidCredentials("login ou senha inv&aacute;lidos")
+        # Falha fechada: credenciais inválidas ou fluxo incompatível com o
+        # sistemas2.
+        if resp.status_code in (401, 403):
+            logger.warning("upstream.login.failed: status=%s login=%s", resp.status_code, login)
+            raise InvalidCredentials("login ou senha inválidos")
 
-        if resp.status_code >= 500:
-            raise UpstreamUnavailable("sistemas2.n&atilde;o respondeu")
+        # Sucesso: o sistemas2 redireciona para a área do usuário (/home).
+        # O conteúdo da resposta não é JSON (sessão no localStorage).
+        if "/home" not in resp.url:
+            logger.warning(
+                "upstream.login.failed: status=%s url=%s login=%s",
+                resp.status_code,
+                str(resp.url),
+                login,
+            )
+            raise InvalidCredentials("login ou senha inválidos")
 
-        # Extrai o cookie de sess&atilde;o salvo pelo servidor
-        cookies = {}
-        for cookie in client.cookies:
-            cookies[cookie.name] = cookie.value
-        return cookies
+        logger.info("upstream.login.success: login=%s", login)
+        # Sessão upstream criada pela universidade (localStorage). O proxy
+        # não possui cookies HTTP e não persistir credenciais. Retorna vazio
+        # para cumprir o contrato do adaptador.
+        return {}
 
-    async def logout(self, cookies: dict[str, str]) -> None:
-        # Realiza o logout via endpoint (se dispon&iacute;vel) pela mesma API do s2
+    async def logout(self, cookies: dict[str, str]) -> None:  # noqa: ARG002
         logout_url = (self._settings.UPSTREAM_LOGOUT_URL if self._settings else "").rstrip("/")
 
         if not logout_url:
             return
 
-        async with httpx.AsyncClient(cookies=cookies, timeout=self._timeout) as client:
+        async with httpx.AsyncClient(cookies=httpx.Cookies(), timeout=self._timeout) as client:
             await client.get(logout_url, follow_redirects=True)
 
-    async def is_session_alive(self, cookies: dict[str, str]) -> bool:  # noqa: ARG002
-        base = (self._settings.UPSTREAM_BASE_URL if self._settings else "https://sistemas2.utfpr.edu.br").rstrip("/")
-        # Sondagem barata: GET na home dos sistemas (necessidade de sess&atilde;o v&aacute;lida)
+    async def is_session_alive(self, cookies: dict[str, str]) -> bool:
+        base = (self._settings.UPSTREAM_BASE_URL if self._settings
+                else "https://sistemas2.utfpr.edu.br").rstrip("/")
+        # Sondagem barata: GET na área do usuário (necessidade de sessão válida).
         if not cookies:
             return False
-        async with httpx.AsyncClient(cookies=cookies, timeout=self._timeout) as client:
+        async with httpx.AsyncClient(cookies=httpx.Cookies(), timeout=self._timeout) as client:
             resp = await client.get(f"{base}/home", follow_redirects=True)
         return resp.status_code == 200
 
 
 def adapter_from_settings(_settings=None) -> UpstreamAuthAdapter:
-    """Fabrica o adaptador (mock default enquanto a T01 está em aberto)."""
+    """Fabrica o adaptador UTFPR real."""
     return UTFPRAdapter(_settings)
