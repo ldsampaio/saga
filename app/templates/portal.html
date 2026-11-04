@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Portal — SAGA{% endblock %}
+{% block content %}
+{% if not heartbeat_alive %}
+  <div class="banner">
+    <strong>Serviço de autenticação indisponível.</strong>
+    <p class="state">Os subsistemas vão negar acesso enquanto o SAGA não estiver respondendo.</p>
+  </div>
+{% endif %}
+
+<h1>Portal</h1>
+<p class="sub">{{ user.login }}{% if user.name %} — {{ user.name }}{% endif %} ({{ user.role_base }})</p>
+
+<div class="grid">
+  {% for s in subsystems %}
+    <a class="tile" href="{{ s.url }}">
+      <strong>{{ s.name }}</strong>
+      <span>Abre com a sessão já ativa.</span>
+    </a>
+  {% endfor %}
+</div>
+
+<form method="post" action="/api/auth/logout" style="margin-top:24px; max-width:480px;">
+  <button type="submit">Sair</button>
+</form>
+{% endblock %}

@@ -1,8 +1,9 @@
-"""Rotas de autenticação (US-01 a US-04, US-09).
+"""Rotas de autenticação (US-01 a US-04, US-06, US-09).
 
-- POST /api/auth/login  -> cria sessão local e retorna cookie
-- POST /api/auth/logout -> encerra a sessão e o cookie
-- GET  /api/auth/me     -> retorna o user_ref ligado à sessão válida
+- POST /api/auth/login   -> valida no sistemas2, find-or-create, cria sessão + cookie
+- POST /api/auth/logout  -> encerra a sessão e o cookie
+- GET  /api/auth/me      -> identidade da sessão válida
+- GET  /.well-known/jwks.json -> chave pública usada pelos subsistemas
 """
 
 from __future__ import annotations
@@ -10,20 +11,15 @@ from __future__ import annotations
 import urllib.parse
 
 from fastapi import APIRouter, HTTPException, Request
-from fastapi.responses import HTMLResponse, JSONResponse, Response
-from fastapi.templating import Jinja2Templates
-from starlette.status import (
-    HTTP_204_NO_CONTENT,
-    HTTP_401_UNAUTHORIZED,
-    HTTP_403_FORBIDDEN,
-)
+from fastapi.responses import JSONResponse
+from starlette.status import HTTP_401_UNAUTHORIZED, HTTP_403_FORBIDDEN
 
 from app.config import get_settings
 from app.models import LoginRequest  # noqa: F401,TC001
+from app.routers.deps import session_id_of
 
 _Settings = get_settings()
 router = APIRouter(prefix="/api/auth", tags=["auth"])
-templates = Jinja2Templates(directory="app/templates")
 
 
 def _request_host(request: Request) -> str:
@@ -52,59 +48,51 @@ def _reject_if_bad_origin(request: Request) -> JSONResponse | None:
     return None
 
 
-async def _session_manager(request: Request):
-    return request.app.state.session_manager
-
-
-def _login_service(request: Request):
-    return request.app.state.login_service
-
-
 @router.post("/login")
 async def login(request: Request, body: LoginRequest):
     if (bad := _reject_if_bad_origin(request)) is not None:
         return bad
-    return await _login_service(request).login(request, body.login, body.password)
+    return await request.app.state.login_service.login(request, body.login, body.password)
 
 
 @router.post("/logout", responses={204: {}, 401: {}})
 async def logout(request: Request):
     if (bad := _reject_if_bad_origin(request)) is not None:
         return bad
-    session_manager = await _session_manager(request)
-    session_id = request.cookies.get(_Settings.SESSION_COOKIE_NAME)
-    if session_id:
-        await session_manager.delete(session_id)
-    response = Response(status_code=HTTP_204_NO_CONTENT)
-    response.delete_cookie(_Settings.SESSION_COOKIE_NAME)
-    return response
-
-
-@router.get("/me", responses={401: {}})
-async def me(request: Request):
-    session_manager = await _session_manager(request)
-    session_id = request.cookies.get(_Settings.SESSION_COOKIE_NAME)
+    session_id = session_id_of(request)
     if not session_id:
         raise HTTPException(
             status_code=HTTP_401_UNAUTHORIZED, detail="Não autenticado"
         )
-    payload = await session_manager.get(session_id)
-    if payload is None:
+    return await request.app.state.login_service.logout(session_id)
+
+
+@router.get("/me", responses={401: {}})
+async def me(request: Request):
+    session_id = session_id_of(request)
+    if not session_id:
+        raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail="Não autenticado")
+    meta = await request.app.state.session_manager.get(session_id)
+    if meta is None:
         raise HTTPException(
             status_code=HTTP_401_UNAUTHORIZED, detail="Sessão inválida ou expirada"
         )
+    user = await request.app.state.user_service.get(meta["user_id"])
+    profile = await request.app.state.profile_service.get_profile(meta["user_id"])
     return {
-        "user_ref": payload.get("user_ref"),
-        "logged_at": payload.get("last_seen_at"),
+        "user": {
+            "id": meta["user_id"],
+            "login": meta["login"],
+            "name": user.name if user else None,
+            "email": user.email if user else None,
+            "role_base": meta["role_base"],
+            "profile_complete": user.profile_complete if user else False,
+        },
+        "profile": profile.model_dump() if profile else None,
+        "logged_at": meta.get("last_seen_at"),
     }
 
 
-# --- rota de login (frontend simples, US-09) ---
-@router.get("/", response_class=HTMLResponse)
-async def login_page(request: Request):
-    return templates.TemplateResponse(request, "login.html", {"request": request})
-
-
-@router.get("/area", response_class=HTMLResponse)
-async def area_page(request: Request):
-    return templates.TemplateResponse(request, "area.html", {"request": request})
+@router.get("/jwks.json", include_in_schema=False)
+async def jwks(request: Request):
+    return JSONResponse(request.app.state.signer.jwks())

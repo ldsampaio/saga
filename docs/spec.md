@@ -1,6 +1,11 @@
 2.1 Contexto e objetivo
 
 A aplicação é o ponto de entrada (entry point) para um sistema de gestão com automações sobre dados do sistemas2.utfpr.edu.br. Ela não possui base de usuários própria: autentica delegando ao sistema da universidade.
+
+**Fase 2 (identidade compartilhada):** a afirmação acima vale para a credencial — o saga
+nunca guarda senha. O que ele passou a manter é a **base canônica de identidade**
+(`auth.users` + `auth.user_profiles`), criada no primeiro login, e o estado de sessão no
+Redis. Os subsistemas leem essa base e a sessão; nenhum deles autentica credencial.
 2.2 Escopo
 
 Dentro do escopo: tela de login, endpoint de autenticação, criação e ciclo de vida da sessão, logout, proxy/cliente autenticado para o sistemas2 e acoplamento de sessões. Fora do escopo (nesta base): funcionalidades de gestão e automação, que consumirão a base depois.
@@ -53,3 +58,47 @@ US-05 Comunicação autenticada
     O banco relacional não guarda credenciais nem cookies upstream.
     O cookie upstream é tratado como equivalente a credencial: vive só no session store efêmero (Redis com TTL, ou memória do processo), criptografado com chave vinda de variável de ambiente ou secret manager.
     O banco pode guardar apenas dados não sensíveis, como um identificador do usuário (ex.: hash/ID institucional) para preferências e auditoria, se o time decidir.
+
+## 2.7 Histórias de usuário — fase 2 (identidade compartilhada)
+
+US-06 Primeiro login
+
+    Dado que informo um login válido no sistemas2, quando envio o formulário, então
+    o backend cria o usuário em `auth.users` se ele não existir.
+    Dado que o login segue o padrão `a` + números (ex.: `a234561`), então o papel
+    base é `ALUNO`. Sem padrão reconhecível, o papel fica `UNDEFINIDO` — o backend
+    não inventa papel.
+
+US-07 Perfil do usuário
+
+    Dado que é meu primeiro login, quando a sessão é criada, então sou redirecionado
+    à tela de perfil para preencher nome, e-mail e os campos do meu papel.
+    Dado que o papel é `UNDEFINIDO`, então o perfil não pode ser fechado.
+
+US-08 Portal e sessão entre sistemas
+
+    Dado que estou logado, quando abro um subsistema, então ele reconhece a sessão
+    sem novo login.
+    Dado que um subsistema não consegue confirmar a sessão, então ele rejeita.
+    Dado que o SAGA está indisponível, então os subsistemas negam acesso e servem
+    página de erro própria — sem redirecionar para o serviço que caiu.
+
+## 2.8 Requisitos funcionais — fase 2
+
+    RF-09: O backend mantém `auth.users` e `auth.user_profiles` em Postgres.
+    RF-10: O primeiro login cria o usuário com `ON CONFLICT` (corrida segura).
+    RF-11: O papel base é inferido só pelo padrão `^a\d+$`.
+    RF-12: O cookie `saga_session` carrega um JWT `ES256` com `sid` e `gen`,
+           escopado ao domínio compartilhado. O `gen` do claim é o gen gravado no
+           store — o signer não inventa o seu (ver §11 do plano).
+    RF-13: O backend expõe `/.well-known/jwks.json` e mantém `saga:heartbeat`
+           no Redis, renovado por tarefa de background.
+    RF-14: Logout derruba a sessão no Redis e publica no canal de revogação;
+           o efeito alcança os três sistemas no request seguinte.
+
+## 2.9 Regras de negócio sobre armazenamento — fase 2
+
+    O banco guarda identidade e campos de papel como COLUNAS (`auth.user_profiles`),
+    não como blob. Nenhum campo de credencial existe em nenhuma tabela.
+    O estado de sessão legível por terceiros (`meta`) não contém o payload do
+    upstream. O payload criptografado é lido apenas pelo saga.

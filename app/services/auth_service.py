@@ -2,9 +2,10 @@
 
 Regras:
 - As credenciais são descartadas imediatamente após a autenticação.
-- Só a sessão upstream (cookies) é mantida, criptografada (RF-04/RNF-04).
+- Só a sessão upstream é mantida, criptografada (RF-04/RNF-04).
 - Falha fechada: credenciais inválidas e indisponibilidade do upstream
   geram respostas distintas (US-02).
+- O cookie carrega um JWT-ponteiro (sid + gen), não a sessão em si.
 """
 
 from __future__ import annotations
@@ -15,7 +16,7 @@ import time
 from typing import TYPE_CHECKING
 
 import httpx
-from fastapi import Request
+from fastapi import Request  # noqa: TC002
 from fastapi.responses import JSONResponse, Response
 from starlette.status import (
     HTTP_401_UNAUTHORIZED,
@@ -35,10 +36,10 @@ from app.core.upstream_adapter import (
 logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
-    from fastapi import Request
-
+    from app.core.jwt_signer import JwtSigner
     from app.core.session_manager import SessionManager
     from app.core.upstream_client import UpstreamClient
+    from app.services.user_service import UserService
 
 _Settings = get_settings()
 
@@ -69,11 +70,15 @@ class LoginService:
         adapter: UpstreamAuthAdapter,
         upstream_client: UpstreamClient,
         rate_limiter: RateLimiter,
+        user_service: UserService,
+        signer: JwtSigner,
     ):
         self._session_manager = session_manager
         self._adapter = adapter
         self._upstream_client = upstream_client
         self._rate_limiter = rate_limiter
+        self._user_service = user_service
+        self._signer = signer
         self._lock = asyncio.Lock()
 
     @staticmethod
@@ -82,13 +87,6 @@ class LoginService:
         if forwarded:
             return forwarded.split(",")[0].strip()
         return request.client.host if request.client else "unknown"
-
-    @classmethod
-    def _infer_user_ref(cls, login: str) -> str:
-        # Placeholder: um identificador não sensível derivado do login.
-        # Na T01 esclarecer o campo que o sistemas2 expõe como
-        # identificador institucional (user_ref).
-        return login.strip().lower()
 
     async def login(self, request: Request, login: str, password: str) -> Response:
         client_ip = self._client_ip(request)
@@ -102,6 +100,7 @@ class LoginService:
         try:
             upstream_cookies = await self._adapter.authenticate(login, password)
         except InvalidCredentials:
+            # RNF-01: loga o login (identificador), nunca a senha.
             logger.warning("auth.login.invalid: client_ip=%s login=%s", client_ip, login)
             return JSONResponse(
                 {"detail": "Login ou senha inválidos."}, status_code=HTTP_401_UNAUTHORIZED
@@ -109,7 +108,7 @@ class LoginService:
         except UpstreamUnavailable as exc:
             logger.error("upstream.unavailable: error=%s", str(exc))
             return JSONResponse(
-                {"detail": "Serviço do sistemas2 indisponível."},
+                {"code": "UPSTREAM_UNAVAILABLE", "detail": "Serviço do sistemas2 indisponível."},
                 status_code=HTTP_503_SERVICE_UNAVAILABLE,
             )
         except SessionExpired:
@@ -123,25 +122,56 @@ class LoginService:
                 status_code=HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
-        # Autenticação aceite no sistemas2 → sessão upstream criada (fica no
-        # localStorage da universidade). Não há cookies HTTP a retornar.
-        user_ref = self._infer_user_ref(login)
-        session_id = await self._session_manager.create(upstream_cookies, user_ref)
-        logger.info(
-            "auth.login.success: session_id=%s user_ref=%s login=%s",
-            session_id[:8],
-            user_ref,
-            login,
+        # Autenticação aceite no sistemas2 → sessão upstream criada. A senha
+        # morre aqui: nada dela entra no banco, no log ou no session store.
+        user, created = await self._user_service.find_or_create(login)
+        await self._user_service.touch_login(user.id)
+
+        session_id, gen = await self._session_manager.create(user, upstream_cookies)
+        token = self._signer.sign(
+            session_id, user.id, user.role_base, _Settings.SESSION_TTL_SECONDS, gen
         )
 
-        response = Response(status_code=200)
+        logger.info(
+            "auth.login.success: session_id=%s user_ref=%s login=%s created=%s",
+            session_id[:8],
+            user.id,
+            user.login,
+            created,
+        )
+
+        response = JSONResponse(
+            {
+                "user": {
+                    "id": user.id,
+                    "login": user.login,
+                    "role_base": user.role_base,
+                    "profile_complete": user.profile_complete,
+                },
+                "redirect": "/perfil" if not user.profile_complete else "/",
+            }
+        )
+        self._set_session_cookie(response, token)
+        return response
+
+    def _set_session_cookie(self, response: Response, token: str) -> None:
         response.set_cookie(
             key=_Settings.SESSION_COOKIE_NAME,
-            value=session_id,
+            value=token,
             httponly=True,
             secure=_Settings.SESSION_COOKIE_SECURE,
             samesite="lax",
             max_age=_Settings.SESSION_TTL_SECONDS,
             path="/",
+            domain=_Settings.SESSION_COOKIE_DOMAIN or None,
+        )
+
+    async def logout(self, session_id: str) -> Response:
+        await self._session_manager.delete(session_id, "logout")
+        response = Response(status_code=204)
+        response.delete_cookie(
+            _Settings.SESSION_COOKIE_NAME,
+            path="/",
+            domain=_Settings.SESSION_COOKIE_DOMAIN or None,
         )
         return response

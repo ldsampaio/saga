@@ -157,14 +157,6 @@ class UTFPRAdapter(UpstreamAuthAdapter):
 
         # Se o corpo for um dicionário que indica erro, rejeita.
         if isinstance(payload, dict):
-            error_fields = {
-                "error",
-                "error_description",
-                "error_code",
-                "error_message",
-                "invalid",
-                "fail",
-            }
             error_hint = str(payload).lower()
             if any(
                 token in error_hint
