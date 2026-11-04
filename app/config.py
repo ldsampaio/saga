@@ -7,7 +7,16 @@ import secrets
 from functools import lru_cache
 from pathlib import Path
 
+from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class PortalSubsystem(BaseModel):
+    """Um destino do menu do portal."""
+
+    key: str
+    name: str
+    url: str
 
 
 class Settings(BaseSettings):
@@ -30,7 +39,33 @@ class Settings(BaseSettings):
     SESSION_INACTIVITY_TTL_SECONDS: int = 900
     SESSION_COOKIE_NAME: str = "saga_session"
     SESSION_COOKIE_SECURE: bool = False  # True em produção (por trás do TLS)
+    # Domínio compartilhado entre saga, sgoa e sgrf (ex.: ".utfpr.edu.br").
+    # Vazio = cookie host-only; em dev `localhost` vale para todas as portas.
+    SESSION_COOKIE_DOMAIN: str = ""
     SESSION_SECRET_KEY: str | None = None
+
+    # --- banco de identidade (schema auth) ---
+    DATABASE_URL: str = "postgresql://sa:sa-dev@localhost:5432/sa"
+
+    # --- JWT-ponteiro (assinado pelo saga, verificado pelos subsistemas) ---
+    JWT_KID: str = "saga-1"
+    JWT_ALG: str = "ES256"
+    JWT_ISSUER: str = "saga"
+    # Em desenvolvimento gera e persiste em .jwt_private_key.pem (ignorado pelo git).
+    JWT_PRIVATE_KEY_PATH: str | None = None
+
+    # --- heartbeat: "o saga está atendendo" ---
+    # Ausente => os subsistemas rejeitam com 503. Falha fechada.
+    HEARTBEAT_TTL_SECONDS: int = 60
+
+    # --- portal ---
+    PORTAL_BASE_URL: str = "http://localhost:8000"
+    PORTAL_SUBSYSTEMS: list[PortalSubsystem] = [
+        PortalSubsystem(key="sgoa", name="SGOA — Orientações Acadêmicas", url="http://localhost:5173"),
+        PortalSubsystem(key="sgrf", name="SGRF — Recursos Departamentais", url="http://localhost:5174"),
+    ]
+    # Allowlist de hosts para o parâmetro `redirect`. Sem allowlist, rejeita.
+    PORTAL_ALLOWED_REDIRECT_HOSTS: list[str] = ["localhost", "saga.utfpr.edu.br"]
 
     # --- rate limit de login ---
     LOGIN_MAX_ATTEMPTS: int = 5
@@ -57,6 +92,25 @@ class Settings(BaseSettings):
                 "SESSION_SECRET_KEY inválida: precisa de pelo menos 32 bytes (Fernet)."
             )
         return _dev_secret_key()
+
+    def login_url(self, redirect: str | None = None) -> str:
+        """URL de login do portal, com `redirect` validado pela allowlist."""
+        base = f"{self.PORTAL_BASE_URL.rstrip('/')}/login"
+        if not redirect:
+            return base
+        host = _host_of(redirect)
+        if host and host in {h.lower() for h in self.PORTAL_ALLOWED_REDIRECT_HOSTS}:
+            return f"{base}?redirect={redirect}"
+        return base
+
+
+def _host_of(url: str) -> str:
+    import urllib.parse
+
+    try:
+        return (urllib.parse.urlparse(url).hostname or "").split(":")[0]
+    except ValueError:
+        return ""
 
 
 def _dev_secret_key() -> bytes:

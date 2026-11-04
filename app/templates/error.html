@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Acesso negado — SAGA{% endblock %}
+{% block content %}
+<div class="card">
+  <h1>Acesso negado</h1>
+  <div class="banner">
+    <strong>{{ message }}</strong>
+    <p class="state">Código: <code>{{ code }}</code></p>
+  </div>
+  <p class="state">Nenhum dado interno, identificador de sessão ou conteúdo do token é exibido.</p>
+  <div style="margin-top:18px;">
+    <button type="button" onclick="window.location.reload()">Tentar de novo</button>
+  </div>
+</div>
+{% endblock %}

@@ -13,8 +13,10 @@ env/
 .env.*
 !.env.example
 *.key
+*.pem
 secrets/
 .secret_key
+.jwt_private_key.pem
 
 # Logs da aplicação (produce o arquivo de registro de auditoria)
 logs/
@@ -30,8 +32,10 @@ env/
 .env.*
 !.env.example
 *.key
+*.pem
 secrets/
 .secret_key
+.jwt_private_key.pem
 
 # OS / editor
 .DS_Store

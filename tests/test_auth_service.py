@@ -1,9 +1,8 @@
-"""Testes do fluxo de autenticação: login, logout, me e rate limit."""
+"""Testes do fluxo de autenticação: login, logout, me, rate limit e primeiro login."""
 
 from __future__ import annotations
 
 import asyncio
-import hashlib
 
 from starlette.status import HTTP_204_NO_CONTENT
 
@@ -55,29 +54,68 @@ class TestLoginFlow:
         finally:
             login_service._adapter._raise = None
 
+    def test_login_indisponibilidade_retorna_503_distinto(self, client, login_service):
+        from app.core.upstream_adapter import UpstreamUnavailable
+
+        login_service._adapter._raise = UpstreamUnavailable("fora")
+        try:
+            response = client.post(
+                "/api/auth/login", json={"login": "joao", "password": "senha-errada"}
+            )
+            assert response.status_code == 503
+            assert response.json()["code"] == "UPSTREAM_UNAVAILABLE"
+        finally:
+            login_service._adapter._raise = None
+
     def test_me_sem_sessao_retorna_401(self, client):
         response = client.get("/api/auth/me")
         assert response.status_code == 401
 
-    def test_me_com_sessao_retorna_user_ref(self, client):
-        client.post(
-            "/api/auth/login", json={"login": "ana.oliveira", "password": "senha456"}
-        )
+    def test_me_com_sessao_retorna_identidade(self, client):
+        client.post("/api/auth/login", json={"login": "ana.oliveira", "password": "senha456"})
         me = client.get("/api/auth/me")
         assert me.status_code == 200
-        assert me.json()["user_ref"] == hashlib.sha256(b"ana.oliveira").hexdigest()
+        assert me.json()["user"]["login"] == "ana.oliveira"
 
     def test_logout_retorna_204(self, client):
-        client.post(
-            "/api/auth/login", json={"login": "outro", "password": "senha789"}
-        )
+        client.post("/api/auth/login", json={"login": "outro", "password": "senha789"})
         response = client.post("/api/auth/logout")
         assert response.status_code == HTTP_204_NO_CONTENT
 
     def test_me_apos_logout_retorna_401(self, client):
-        client.post(
-            "/api/auth/login", json={"login": "logado", "password": "senha111"}
-        )
+        client.post("/api/auth/login", json={"login": "logado", "password": "senha111"})
         client.post("/api/auth/logout")
         response = client.get("/api/auth/me")
         assert response.status_code == 401
+
+
+class TestPrimeiroLogin:
+    """US-06: o primeiro login cria o usuário e decide o papel pelo padrão do login."""
+
+    def test_login_aluno_cria_usuario_com_papel_inferido(self, client, user_repository):
+        response = client.post("/api/auth/login", json={"login": "a234561", "password": "x"})
+        assert response.status_code == 200
+        data = response.json()
+        assert data["user"]["role_base"] == "ALUNO"
+        assert data["redirect"] == "/perfil"
+        assert data["user"]["profile_complete"] is False
+        assert user_repository._users["a234561"].role_base == "ALUNO"
+
+    def test_login_sem_padrao_nao_inventa_papel(self, client):
+        response = client.post("/api/auth/login", json={"login": "joao.ribeiro", "password": "x"})
+        assert response.json()["user"]["role_base"] == "UNDEFINIDO"
+
+    def test_segundo_login_nao_recria_usuario(self, client, user_repository):
+        first = client.post("/api/auth/login", json={"login": "a1", "password": "x"})
+        first_id = first.json()["user"]["id"]
+        second = client.post("/api/auth/login", json={"login": "a1", "password": "y"})
+        assert second.json()["user"]["id"] == first_id
+        assert len(user_repository._users) == 1
+
+    def test_login_completo_redireciona_para_o_portal(self, client, user_repository):
+        client.post("/api/auth/login", json={"login": "a999", "password": "x"})
+        user = user_repository._users["a999"]
+        user.name = "Ana"
+        user.profile_complete = True
+        response = client.post("/api/auth/login", json={"login": "a999", "password": "x"})
+        assert response.json()["redirect"] == "/"
