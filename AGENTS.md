@@ -58,6 +58,13 @@ REDIS_ACL_URL="redis://saga_readonly:saga-dev-ro@localhost:6379" \
 - **Anti open-redirect** (`app/routers/deps.py::safe_redirect`): aceita caminho interno com
   um slash inicial ou host da allowlist. `//host` e `/\host` são protocol-relative em muitos
   navegadores e não contam como caminho interno.
+- **A tela de perfil valida pelo papel SELECIONADO, não pelo papel armazenado.** Um login
+  que não segue `a` + números chega `UNDEFINIDO`, e `ALLOWED_BY_ROLE[UNDEFINIDO]` é vazio:
+  renderizar só o conjunto do papel armazenado escondia o input de departamento enquanto o
+  backend o exigia para fechar o perfil de PROFESSOR. O template recebe o mapa por papel
+  (`allowed_by_role` / `required_by_role`) e o select tem a opção `UNDEFINIDO` — sem ela o
+  select cai no primeiro option e mostra um papel que não é o armazenado. Regressão em
+  `tests/test_profile_page.py`.
 - **Rate limit de login é em memória** — não sobrevive a restart nem a múltiplas instâncias.
 - **Cookie:** `saga_session` no domínio base; vazio = host-only, e em dev `localhost` vale
   para todas as portas.

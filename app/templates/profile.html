@@ -24,7 +24,7 @@
     <div class="field">
       <label for="role_base">Papel</label>
       <select id="role_base" name="role_base">
-        {% for r in ['ALUNO', 'PROFESSOR'] %}
+        {% for r in ['ALUNO', 'PROFESSOR', 'UNDEFINIDO'] %}
           <option value="{{ r }}" {% if user.role_base == r %}selected{% endif %}>{{ r }}</option>
         {% endfor %}
       </select>
@@ -58,16 +58,24 @@
 </div>
 
 <script>
-  const ALLOWED = {{ allowed_fields | tojson }};
+  const ALLOWED_BY_ROLE = {{ allowed_by_role | tojson }};
+  const REQUIRED_BY_ROLE = {{ required_by_role | tojson }};
   const form = document.getElementById('profileForm');
   const error = document.getElementById('error');
 
   function applyRole() {
     const role = document.getElementById('role_base').value;
+    const permitidos = ALLOWED_BY_ROLE[role] || [];
+    const obrigatorios = REQUIRED_BY_ROLE[role] || [];
     form.querySelectorAll('[data-role]').forEach((el) => {
-      el.style.display = ALLOWED.includes(el.querySelector('input').name) && el.dataset.role === role
-        ? 'block'
-        : 'none';
+      const campo = el.querySelector('input').name;
+      const mostra = permitidos.includes(campo);
+      el.style.display = mostra ? 'block' : 'none';
+      // Marca o que o backend exige para fechar o perfil: sem isto o usuário recebe
+      // "campo obrigatório" de um input que a tela escondeu.
+      const obrigatorio = mostra && obrigatorios.includes(campo);
+      el.querySelector('input').required = obrigatorio;
+      el.classList.toggle('field--required', obrigatorio);
     });
   }
   document.getElementById('role_base').addEventListener('change', applyRole);

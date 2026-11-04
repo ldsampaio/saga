@@ -9,6 +9,7 @@ from fastapi.templating import Jinja2Templates
 from app.config import get_settings
 from app.errors import ERROR_MESSAGES
 from app.routers.deps import safe_redirect, session_id_of
+from app.services.profile_service import ALLOWED_BY_ROLE, REQUIRED_BY_ROLE
 
 _Settings = get_settings()
 router = APIRouter(tags=["pages"])
@@ -61,8 +62,10 @@ async def profile_page(request: Request):
     if user is None:
         return RedirectResponse(url="/login", status_code=302)
     profile = await request.app.state.profile_service.get_profile(user.id)
-    from app.services.profile_service import ALLOWED_BY_ROLE
 
+    # O conjunto de campos é por PAPEL, não só pelo papel armazenado: o papel base pode
+    # chegar UNDEFINIDO (só `a` + números é reconhecível) e o usuário escolhe o papel na
+    # tela. Renderizar só o do papel armazenado escondia o input que o backend exige.
     return templates.TemplateResponse(
         request,
         "profile.html",
@@ -71,6 +74,12 @@ async def profile_page(request: Request):
             "user": user,
             "profile": profile,
             "allowed_fields": sorted(ALLOWED_BY_ROLE.get(user.role_base, [])),
+            "allowed_by_role": {
+                role: sorted(campos) for role, campos in ALLOWED_BY_ROLE.items()
+            },
+            "required_by_role": {
+                role: sorted(campos) for role, campos in REQUIRED_BY_ROLE.items()
+            },
         },
     )
 

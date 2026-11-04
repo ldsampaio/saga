@@ -55,6 +55,12 @@ h1 { font-size: 1.25rem; margin: 0 0 6px; }
 .field { margin-bottom: 14px; }
 label { display: block; font-size: .85rem; color: var(--muted); margin-bottom: 6px; }
 
+/* Campo exigido para fechar o perfil do papel escolhido. O asterisco é o que
+   faltava: a tela escondia o input e o backend reclamava dele. */
+.field--required label { color: var(--text); }
+.field--required label::after { content: " *"; color: var(--accent); }
+.field--required input { border-color: var(--accent); }
+
 input, select {
   width: 100%;
   padding: 10px 12px;
