@@ -154,6 +154,9 @@ precisar de navegador para isso.
 - [x] Nenhum hex em `app/static/*.css` fora de `tokens.css` (verificado por teste; `styles.css` do
       dark slate foi removido)
 - [x] Nenhum `style="..."` em `app/templates/*.html` (verificado por teste)
+- [x] Nenhum px cru em `components.css` fora de `@media` — dimensão de componente é token
+      (`--grid-max-width`, `--button-press-offset`, `--weave-stroke`/`--weave-gap`). As duas
+      ocorrências restantes do validador são os breakpoints 767/1023, que são a exceção registrada.
 - [x] Nenhum emoji como ícone estrutural (verificado por teste)
 - [x] `base.html` linka `tokens.css` + `base.css` + `components.css` e tem `preconnect` + `display=swap`
 - [x] Todo `<svg>` decorativo com `aria-hidden="true"`; ícone significativo com `role="img"` + `aria-label`
@@ -168,8 +171,10 @@ precisar de navegador para isso.
 - [ ] Testado visualmente em 375 / 768 / 1024 / 1440 px — **pendência de ambiente**: não há
       navegador headless aqui. Cobertura estática dos breakpoints 767/1023.
 
-**Exceções registradas** (dimensões de layout que não são tokens): breakpoints 767/1023px,
-`max-width` de card 480px e de grid 640px. Tudo o mais vem de token.
+**Exceções registradas** (dimensões de layout que não são tokens): breakpoints 767/1023px.
+`max-width` de card (`--card-max-width` 480px) e de grid (`--grid-max-width` 640px) foram
+promovidos a token, então `validate-tokens.cjs` reporta só os dois breakpoints — que é o resultado
+esperado.
 
 ---
 

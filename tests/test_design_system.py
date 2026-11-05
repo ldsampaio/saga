@@ -108,6 +108,16 @@ def test_foco_visivel_em_base_css():
     assert ":focus-visible" in texto, "base.css sem foco visível"
 
 
+def test_px_somente_em_breakpoints():
+    """Dimensão de componente é token; px cru só é aceito dentro de `@media`."""
+    texto = (STATIC / "components.css").read_text(encoding="utf-8")
+    for seletor, corpo in re.findall(r"([^{}]+)\{([^{}]*)\}", texto):
+        if seletor.strip().startswith("@media"):
+            continue
+        achados = re.findall(r"\d+px", corpo)
+        assert not achados, f"px hardcoded fora de breakpoint em {seletor.strip()}: {achados}"
+
+
 def test_o_css_antigo_nao_sobrevive():
     """O dark slate anterior é o origem das violações de hex — ele sai inteiro."""
     assert not (STATIC / "styles.css").exists(), "styles.css (dark slate) ainda existe"

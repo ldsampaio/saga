@@ -169,6 +169,10 @@
   --button-primary-bg: var(--color-cta);
   --button-primary-fg: var(--color-on-cta);
   --button-primary-bg-hover: var(--color-cta-hover);
+  --button-press-offset: 3px;
+  --weave-stroke: 2px;
+  --weave-gap: 14px;
+  --weave-opacity: 0.14;
   --pill-fg: var(--color-text);
   --pill-border: 2px solid var(--color-border);
   --pill-radius: var(--radius-pill);
@@ -188,6 +192,8 @@
   --alert-sucesso-bg: var(--color-success);
   --alert-dica-bg: var(--color-surface-muted);
   --alert-limite-bg: var(--color-accent-amber);
+  --hero-width: 520px;
+  --grid-max-width: 640px;
   --tile-border: 3px solid var(--color-border);
   --tile-radius: var(--radius-md);
   --tile-shadow: var(--shadow-flat);

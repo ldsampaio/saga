@@ -17,7 +17,7 @@
 }
 
 .cartao--larga {
-  max-width: 640px;
+  max-width: var(--grid-max-width);
 }
 
 .cartao form {
@@ -59,7 +59,7 @@
 
 /* Press: translateY + sombra, nunca transform que desloca o vizinho */
 .botao:active {
-  transform: translateY(3px);
+  transform: translateY(var(--button-press-offset));
   box-shadow: var(--button-shadow-press);
 }
 
@@ -211,7 +211,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(var(--tile-min-width), 1fr));
   gap: var(--spacing-2);
-  max-width: 640px;
+  max-width: var(--grid-max-width);
 }
 
 .tile {
@@ -363,7 +363,7 @@
 /* ===== Login: split hero + caixa clay ===== */
 .pagina-login {
   display: grid;
-  grid-template-columns: minmax(0, 520px) minmax(0, 480px);
+  grid-template-columns: minmax(0, var(--hero-width)) minmax(0, var(--card-max-width));
   gap: var(--spacing-5);
   align-items: start;
   padding: var(--spacing-5) var(--spacing-4);
@@ -385,9 +385,9 @@
   inset: 0;
   border-radius: var(--card-radius);
   background-image:
-    repeating-linear-gradient(45deg, var(--color-brand) 0 2px, transparent 2px 14px),
-    repeating-linear-gradient(-45deg, var(--color-brand) 0 2px, transparent 2px 14px);
-  opacity: 0.14;
+    repeating-linear-gradient(45deg, var(--color-brand) 0 var(--weave-stroke), transparent var(--weave-stroke) var(--weave-gap)),
+    repeating-linear-gradient(-45deg, var(--color-brand) 0 var(--weave-stroke), transparent var(--weave-stroke) var(--weave-gap));
+  opacity: var(--weave-opacity);
   pointer-events: none;
 }
 
