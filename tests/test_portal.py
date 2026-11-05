@@ -8,10 +8,13 @@ O portal lista os subsistemas configurados e abre com a sessão já ativa. O par
 from __future__ import annotations
 
 import asyncio
+from pathlib import Path
 
 from app.config import get_settings
 
 _Settings = get_settings()
+RAIZ = Path(__file__).resolve().parent.parent
+TEMPLATES = RAIZ / "app" / "templates"
 
 
 def _abre_sessao(session_manager, signer, user):
@@ -31,17 +34,33 @@ def test_portal_sem_sessao_vai_para_login(client):
     assert response.headers["location"] == "/login"
 
 
-def test_portal_lista_os_dois_subsistemas_configurados(client, session_manager, signer, user_repository):
+def test_portal_lista_os_tres_subsistemas_configurados(client, session_manager, signer, user_repository):
     user = asyncio.run(user_repository.create("a234561", "ALUNO"))
     _perfil_completo(user_repository, user)
     _, cookie = _abre_sessao(session_manager, signer, user)
 
     html = client.get("/", cookies=cookie).text
 
-    assert len(_Settings.PORTAL_SUBSYSTEMS) == 2
+    assert len(_Settings.PORTAL_SUBSYSTEMS) == 3
     for subsistema in _Settings.PORTAL_SUBSYSTEMS:
         assert subsistema.url in html, f"{subsistema.key} não está no menu"
         assert subsistema.name in html
+
+
+def test_nav_linka_para_o_sgtu_com_origem_saga(client, session_manager, signer, user_repository):
+    """Onda 7 do plano ../SGTU.md: o link de ticket em cada interface.
+
+    `origem` é o sistema de origem (allowlist do SGTU) e `rota` é o path da
+    interface — o SGTU valida os dois e nunca renderiza a query bruta.
+    """
+    user = asyncio.run(user_repository.create("a234563", "ALUNO"))
+    _perfil_completo(user_repository, user)
+    _, cookie = _abre_sessao(session_manager, signer, user)
+
+    html = client.get("/perfil", cookies=cookie).text
+
+    assert f"{_Settings.SGTU_URL}/tickets/novo?origem=saga&rota=/perfil" in html
+    assert 'icon("ticket", 16)' in (TEMPLATES / "base.html").read_text(encoding="utf-8")
 
 
 def test_portal_com_perfil_incompleto_redireciona_para_perfil(client, session_manager, signer, user_repository):

@@ -14,6 +14,9 @@ from app.services.profile_service import ALLOWED_BY_ROLE, REQUIRED_BY_ROLE
 _Settings = get_settings()
 router = APIRouter(tags=["pages"])
 templates = Jinja2Templates(directory="app/templates")
+# O nav de `base.html` precisa do destino do SGTU; global de template evita
+# repetir o contexto em cada TemplateResponse.
+templates.env.globals["sgtu_url"] = _Settings.SGTU_URL
 
 
 async def _meta(request: Request) -> dict | None:
