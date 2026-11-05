@@ -193,8 +193,7 @@
   --alert-dica-bg: var(--color-surface-muted);
   --alert-limite-bg: var(--color-accent-amber);
   --hero-width: 520px;
-  --content-max-width: 916px;
-  --grid-max-width: var(--content-max-width);
+  --grid-max-width: 640px;
   --tile-border: 3px solid var(--color-border);
   --tile-radius: var(--radius-md);
   --tile-shadow: var(--shadow-flat);
