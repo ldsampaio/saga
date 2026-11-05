@@ -1,0 +1,398 @@
+/* ==========================================================================
+   SAGA — Componentes (assinaturas clay)
+   Design system: design-system/saga/pages/*.md > design-system/saga/MASTER.md
+   Nenhum hex aqui: todo valor vem de app/static/tokens.css.
+   ========================================================================== */
+
+/* ===== Cartao ===== */
+.cartao {
+  background: var(--card-bg);
+  color: var(--card-fg);
+  border: var(--card-border);
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
+  padding: var(--card-padding);
+  max-width: var(--card-max-width);
+  width: 100%;
+}
+
+/* ===== Botao: pill, borda ink, offset shadow dura ===== */
+.botao {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  min-height: var(--button-min-height);
+  padding: var(--spacing-1) var(--spacing-3);
+  background: var(--button-bg);
+  color: var(--button-fg);
+  border: var(--button-border);
+  border-radius: var(--button-radius);
+  box-shadow: var(--button-shadow);
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: var(--size-base);
+  cursor: pointer;
+}
+
+.botao--primario {
+  background: var(--button-primary-bg);
+  color: var(--button-primary-fg);
+}
+
+.botao--primario:hover {
+  background: var(--button-primary-bg-hover);
+}
+
+/* Press: translateY + sombra, nunca transform que desloca o vizinho */
+.botao:active {
+  transform: translateY(3px);
+  box-shadow: var(--button-shadow-press);
+}
+
+.botao:disabled {
+  background: var(--color-neutral-tint);
+  color: var(--color-text-muted);
+  box-shadow: var(--shadow-hard);
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ===== Campo ===== */
+.campo {
+  margin-bottom: var(--spacing-2);
+}
+
+.campo label {
+  display: block;
+  font-family: var(--font-body);
+  font-size: var(--size-sm);
+  font-weight: 500;
+  color: var(--color-text-muted);
+  margin-bottom: var(--spacing-1);
+}
+
+.campo input,
+.campo select {
+  width: 100%;
+  min-height: var(--input-min-height);
+  padding: var(--spacing-1) var(--spacing-2);
+  background: var(--input-bg);
+  color: var(--input-fg);
+  border: var(--input-border);
+  border-radius: var(--input-radius);
+  font-family: var(--font-body);
+  font-size: var(--size-base);
+}
+
+.campo input:focus,
+.campo select:focus {
+  border: var(--input-border-focus);
+  box-shadow: var(--input-ring);
+  outline: none;
+}
+
+/* O asterisco é o que faltava: a tela escondia o input e o backend reclamava dele. */
+.campo--obrigatorio label {
+  color: var(--color-text);
+}
+
+.campo--obrigatorio label::after {
+  content: " *";
+  color: var(--color-primary);
+}
+
+.campo--obrigatorio input {
+  border: var(--input-border-focus);
+}
+
+/* Visibilidade por papel vem de classe, nunca de style inline. */
+.campo--oculto {
+  display: none;
+}
+
+/* ===== Pilula (estado: cor + icone + rotulo) ===== */
+.pilula {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  min-height: var(--pill-min-height);
+  padding: var(--spacing-1) var(--spacing-2);
+  color: var(--pill-fg);
+  border: var(--pill-border);
+  border-radius: var(--pill-radius);
+  font-family: var(--font-display);
+  font-size: var(--size-xs);
+  font-weight: 600;
+}
+
+.pilula--papel-aluno { background: var(--color-papel-aluno); }
+.pilula--papel-professor { background: var(--color-papel-professor); }
+.pilula--papel-undefinido { background: var(--color-papel-undefinido); }
+
+/* ===== Alerta ===== */
+.alerta {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-2);
+  padding: var(--spacing-2) var(--spacing-3);
+  border: var(--alert-border);
+  border-radius: var(--alert-radius);
+}
+
+.alerta .icon {
+  width: var(--alert-icon-size);
+  height: var(--alert-icon-size);
+  flex: none;
+}
+
+.alerta--erro {
+  background: var(--alert-erro-bg);
+  color: var(--alert-erro-fg);
+}
+
+.alerta--sucesso {
+  background: var(--alert-sucesso-bg);
+  color: var(--color-text);
+}
+
+.alerta--dica {
+  background: var(--alert-dica-bg);
+  color: var(--color-text);
+}
+
+.alerta--limite {
+  background: var(--alert-limite-bg);
+  color: var(--color-text);
+}
+
+.alerta p {
+  margin: var(--spacing-1) 0 0;
+  font-size: var(--size-sm);
+  color: var(--color-text-muted);
+}
+
+/* ===== Tile (portal) ===== */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(var(--tile-min-width), 1fr));
+  gap: var(--spacing-2);
+  max-width: 640px;
+}
+
+.tile {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-2);
+  padding: var(--tile-padding);
+  background: var(--card-bg);
+  color: var(--card-fg);
+  border: var(--tile-border);
+  border-radius: var(--tile-radius);
+  box-shadow: var(--tile-shadow);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.tile:hover {
+  box-shadow: var(--card-shadow-hover);
+}
+
+.tile strong {
+  display: block;
+  font-family: var(--font-display);
+  font-size: var(--size-md);
+  margin-bottom: var(--spacing-1);
+}
+
+.tile span {
+  color: var(--color-text-muted);
+  font-size: var(--size-sm);
+}
+
+/* Tile pastel rotativo por posição — sempre com ink em cima */
+.tile:nth-child(4n + 1) .tile-icon { background: var(--color-accent-sky); }
+.tile:nth-child(4n + 2) .tile-icon { background: var(--color-accent-amber); }
+.tile:nth-child(4n + 3) .tile-icon { background: var(--color-accent-lilac); }
+.tile:nth-child(4n + 4) .tile-icon { background: var(--color-accent-mint); }
+
+.tile-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-1);
+  border: var(--pill-border);
+  border-radius: var(--radius-sm);
+}
+
+/* ===== Navbar: floating clay card ===== */
+.navbar {
+  position: sticky;
+  top: var(--navbar-sticky-top);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-2);
+  min-height: var(--navbar-height);
+  margin: var(--navbar-sticky-top) var(--spacing-4) 0;
+  padding: 0 var(--spacing-3);
+  background: var(--navbar-bg);
+  color: var(--navbar-fg);
+  border: var(--navbar-border);
+  border-radius: var(--navbar-radius);
+  box-shadow: var(--navbar-shadow);
+  z-index: 1;
+}
+
+.navbar .marca {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--size-lg);
+  letter-spacing: -0.02em;
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.navbar nav {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-1);
+}
+
+.navbar nav a {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  min-height: var(--pill-min-height);
+  padding: var(--spacing-1) var(--spacing-2);
+  border-radius: var(--pill-radius);
+  color: var(--color-text);
+  text-decoration: none;
+  font-family: var(--font-display);
+  font-size: var(--size-sm);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.navbar nav a:hover {
+  background: var(--color-primary-soft);
+}
+
+.navbar nav a.ativo {
+  background: var(--color-primary-soft);
+  border: var(--pill-border);
+  border-color: var(--color-primary);
+}
+
+/* ===== Estados disabled / loading / empty ===== */
+.spinner {
+  display: inline-block;
+  width: var(--spinner-size);
+  height: var(--spinner-size);
+  border: var(--pill-border);
+  border-color: var(--color-border);
+  border-top-color: var(--color-primary);
+  border-radius: var(--radius-pill);
+  animation: spin var(--duration-spin) var(--easing-in-out) infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.linha-vazia {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-3);
+  background: var(--color-surface-muted);
+  border: var(--pill-border);
+  border-color: var(--color-border-soft);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-muted);
+  font-size: var(--size-sm);
+}
+
+/* ===== Login: split hero + caixa clay ===== */
+.pagina-login {
+  display: grid;
+  grid-template-columns: minmax(0, 520px) minmax(0, 480px);
+  gap: var(--spacing-5);
+  align-items: start;
+  padding: var(--spacing-5) var(--spacing-4);
+}
+
+.hero {
+  position: relative;
+  padding: var(--spacing-4);
+  border: var(--card-border);
+  border-radius: var(--card-radius);
+  background: var(--color-primary-soft);
+  box-shadow: var(--card-shadow);
+}
+
+/* Trama weave decorativa — nunca porta informação */
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: var(--card-radius);
+  background-image:
+    repeating-linear-gradient(45deg, var(--color-brand) 0 2px, transparent 2px 14px),
+    repeating-linear-gradient(-45deg, var(--color-brand) 0 2px, transparent 2px 14px);
+  opacity: 0.14;
+  pointer-events: none;
+}
+
+.hero h1 {
+  font-size: var(--size-hero);
+  margin-bottom: var(--spacing-3);
+}
+
+.chips {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.chip {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-1) var(--spacing-2);
+  border: var(--pill-border);
+  border-radius: var(--pill-radius);
+  font-size: var(--size-sm);
+}
+
+.chip:nth-child(1) { background: var(--color-accent-sky); }
+.chip:nth-child(2) { background: var(--color-accent-amber); }
+.chip:nth-child(3) { background: var(--color-accent-lilac); }
+
+.caixa-login {
+  position: relative;
+  z-index: 1;
+}
+
+/* ===== Breakpoints (excecao registrada no MASTER: nao sao tokens) ===== */
+@media (max-width: 767px) {
+  .pagina-login {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-4);
+    padding: var(--spacing-3);
+  }
+
+  .navbar {
+    margin: var(--navbar-sticky-top) var(--spacing-3) 0;
+    flex-wrap: wrap;
+  }
+
+  .shell {
+    padding: var(--spacing-3);
+  }
+}
+
+@media (max-width: 1023px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
