@@ -102,6 +102,12 @@ select:focus-visible,
   color: var(--color-text);
 }
 
+/* `hidden` precisa vencer display:flex dos componentes, senão o estado some e o
+   JS acha que escondeu quando só mudou o tipo de display. */
+[hidden] {
+  display: none !important;
+}
+
 /* ===== Movimento: exit faster than enter, bounce so onde agrega ===== */
 button,
 a,

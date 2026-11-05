@@ -6,8 +6,10 @@
 
 - **Split**: hero (esquerda, 520px) + `caixa-login` clay (direita, 480px). Em ≤767px o hero vira
   faixa superior de 240px e a caixa fica abaixo.
-- Hero: trama weave decorativa em `--color-brand`, chips pastel (`sky`/`amber`/`lilac`/`mint`) com
-  ícone 16 + rótulo. O hero é decorativo: `aria-hidden`, nenhuma informação só nele.
+- Hero: trama weave decorativa em `--color-brand` (pseudo-elemento, fora da árvore de
+  acessibilidade), chips pastel (`sky`/`amber`/`lilac`/`mint`) com ícone 16 + rótulo. O **weave** é
+  decorativo; o texto do hero é informação e continua legível — o ícone é `aria-hidden`, o rótulo
+  carrega a semântica.
 - Título `--size-hero` em Space Grotesk 700.
 
 ## Conteúdo do hero (fixo)

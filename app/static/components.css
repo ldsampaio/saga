@@ -16,6 +16,20 @@
   width: 100%;
 }
 
+.cartao--larga {
+  max-width: 640px;
+}
+
+.cartao form {
+  margin-top: var(--spacing-3);
+}
+
+.sub {
+  color: var(--color-text-muted);
+  font-size: var(--size-sm);
+  margin: 0 0 var(--spacing-3);
+}
+
 /* ===== Botao: pill, borda ink, offset shadow dura ===== */
 .botao {
   display: inline-flex;
@@ -47,6 +61,11 @@
 .botao:active {
   transform: translateY(3px);
   box-shadow: var(--button-shadow-press);
+}
+
+.botao--bloco {
+  width: 100%;
+  justify-content: center;
 }
 
 .botao:disabled {
@@ -110,6 +129,12 @@
   display: none;
 }
 
+.campo--erro input,
+.campo--erro select {
+  border: var(--input-border-focus);
+  box-shadow: var(--input-ring);
+}
+
 /* ===== Pilula (estado: cor + icone + rotulo) ===== */
 .pilula {
   display: inline-flex;
@@ -165,6 +190,16 @@
   color: var(--color-text);
 }
 
+.alerta strong {
+  font-family: var(--font-display);
+  font-weight: 600;
+}
+
+.alerta code {
+  font-size: var(--size-xs);
+  color: var(--color-text-muted);
+}
+
 .alerta p {
   margin: var(--spacing-1) 0 0;
   font-size: var(--size-sm);
@@ -195,6 +230,10 @@
 
 .tile:hover {
   box-shadow: var(--card-shadow-hover);
+}
+
+.tile-texto {
+  display: block;
 }
 
 .tile strong {
@@ -297,6 +336,15 @@
 
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  margin-top: var(--spacing-2);
+  color: var(--color-text-muted);
+  font-size: var(--size-sm);
 }
 
 .linha-vazia {
