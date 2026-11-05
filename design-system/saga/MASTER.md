@@ -141,6 +141,7 @@ se aplica. **`@media (prefers-reduced-motion: reduce)` é obrigatório** (`base.
 | `.alerta` | flex com ícone 20px; erro = red-100/red-800; sucesso = mint; dica = canvas; limite = amber |
 | `.tile` | clay card border-3, tile pastel rotativo (sky/amber/lilac/mint) com ícone 20; nome em Space Grotesk; `cursor: pointer` |
 | `.navbar` | **floating clay card** (sticky top 12px), bg card, border-3, nav items pill; ativo = primary-soft + border primary |
+| `.pilula-flutuante` | pílula CTA **fixa à esquerda** (centro vertical; canto inferior em ≤767 px), ícone 24 + rótulo — o ícone nunca é o único portador de informação. Dimensões de token, sem px cru fora de `@media` |
 | `.pagina-login` | split: hero com trama weave decorativa + `caixa-login` clay + chips pastel |
 | `.spinner` | 28px, `0.9s ease-in-out`, `role="status"` + rótulo textual |
 

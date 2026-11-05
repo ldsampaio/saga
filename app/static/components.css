@@ -322,6 +322,41 @@
   border-color: var(--color-primary);
 }
 
+/* ===== Pílula flutuante (ponto de entrada do SGTU, onda 7) ===== */
+/* Fixa, fora do menu. Dimensões vêm de token (sem px cru); o rótulo acompanha o
+   ícone porque o ícone nunca é o único portador de informação. Foco e movimento
+   são os globais de base.css (:focus-visible, prefers-reduced-motion). */
+.pilula-flutuante {
+  position: fixed;
+  left: var(--spacing-4);
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  min-height: var(--pill-min-height);
+  padding: var(--spacing-1) var(--spacing-3);
+  background: var(--button-primary-bg);
+  color: var(--button-primary-fg);
+  border: var(--button-border);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-cta);
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: var(--size-base);
+  text-decoration: none;
+  z-index: 2;
+}
+
+.pilula-flutuante:hover {
+  background: var(--button-primary-bg-hover);
+}
+
+.pilula-flutuante:active {
+  transform: translateY(calc(-50% + var(--button-press-offset)));
+  box-shadow: var(--button-shadow-press);
+}
+
 /* ===== Estados disabled / loading / empty ===== */
 .spinner {
   display: inline-block;
@@ -436,6 +471,16 @@
 
   .shell {
     padding: var(--spacing-3);
+    /* Folga embaixo: em 375 px a pílula fixa cruza a coluna de conteúdo. */
+    padding-bottom: var(--spacing-7);
+  }
+
+  /* Estreito: a pílula desce para o canto inferior esquerdo, onde não cobre
+     texto. Acima de 767 px ela fica no centro vertical à esquerda. */
+  .pilula-flutuante {
+    top: auto;
+    bottom: var(--spacing-4);
+    transform: none;
   }
 }
 

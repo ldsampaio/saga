@@ -25,13 +25,19 @@
       <a href="/" {% if request.path == "/" %}class="ativo"{% endif %}>
         {{ icon("squares", 16) }} Portal
       </a>
-      {% if user %}
-        <a href="{{ sgtu_url }}/tickets/novo?origem=saga&rota={{ request.path }}">
-          {{ icon("ticket", 16) }} Tickets
-        </a>
-      {% endif %}
     </nav>
   </header>
+
+  {% if user %}
+    {# Onda 7 do plano ../SGTU.md: o ponto de entrada do ticket saiu do menu.
+       Pílula fixa à esquerda — o rótulo "Ticket" fica sempre visível, porque o
+       ícone nunca é o único portador de informação. Gateada pela sessão, igual
+       ao resto do nav. #}
+    <a class="pilula-flutuante" href="{{ sgtu_url }}/tickets/novo?origem=saga&rota={{ request.path }}">
+      {{ icon("ticket", 24) }} Ticket
+    </a>
+  {% endif %}
+
   <main class="shell">
     {% block content %}{% endblock %}
   </main>
