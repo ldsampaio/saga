@@ -96,6 +96,11 @@ REDIS_ACL_URL="redis://saga_readonly:saga-dev-ro@localhost:6379" \
   (`allowed_by_role` / `required_by_role`) e o select tem a opção `UNDEFINIDO` — sem ela o
   select cai no primeiro option e mostra um papel que não é o armazenado. Regressão em
   `tests/test_profile_page.py`.
+- **Meta escrita à mão para verificação ao vivo precisa de `created_at` e `last_seen_at`.** Sem
+  esses campos, `SessionManager.get` lê `0`, considera `ttl_expired` e **apaga** a sessão — o portal
+  e o perfil respondem 302 enquanto os subsistemas, que só leem `meta`, continuam aceitando o token.
+  A divergência entre os dois caminhos faz o 302 parecer bug do portal. Regra: hash de teste com os
+  dois campos, ou login real pelo fluxo do saga.
 - **Rate limit de login é em memória** — não sobrevive a restart nem a múltiplas instâncias.
 - **Cookie:** `saga_session` no domínio base; vazio = host-only, e em dev `localhost` vale
   para todas as portas.
