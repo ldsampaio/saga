@@ -63,7 +63,11 @@ class Settings(BaseSettings):
     PORTAL_SUBSYSTEMS: list[PortalSubsystem] = [
         PortalSubsystem(key="sgoa", name="SGOA — Orientações Acadêmicas", url="http://localhost:5173"),
         PortalSubsystem(key="sgrf", name="SGRF — Recursos Departamentais", url="http://localhost:5174"),
+        PortalSubsystem(key="sgtu", name="SGTU — Gestão de Tickets", url="http://localhost:5175"),
     ]
+    # SGTU (onda 7 do plano ../SGTU.md): o link de ticket de cada interface.
+    # Por env — o saga não conhece o deploy dos subsistemas por outra via.
+    SGTU_URL: str = "http://localhost:5175"
     # Allowlist de hosts para o parâmetro `redirect`. Sem allowlist, rejeita.
     PORTAL_ALLOWED_REDIRECT_HOSTS: list[str] = ["localhost", "saga.utfpr.edu.br"]
 

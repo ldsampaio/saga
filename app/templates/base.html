@@ -25,6 +25,11 @@
       <a href="/" {% if request.path == "/" %}class="ativo"{% endif %}>
         {{ icon("squares", 16) }} Portal
       </a>
+      {% if user %}
+        <a href="{{ sgtu_url }}/tickets/novo?origem=saga&rota={{ request.path }}">
+          {{ icon("ticket", 16) }} Tickets
+        </a>
+      {% endif %}
     </nav>
   </header>
   <main class="shell">
