@@ -48,10 +48,14 @@ def test_portal_lista_os_tres_subsistemas_configurados(client, session_manager, 
 
 
 def test_nav_linka_para_o_sgtu_com_origem_saga(client, session_manager, signer, user_repository):
-    """Onda 7 do plano ../SGTU.md: o link de ticket em cada interface.
+    """Onda 7 do plano ../SGTU.md: o ponto de entrada do ticket em cada interface.
 
     `origem` é o sistema de origem (allowlist do SGTU) e `rota` é o path da
     interface — o SGTU valida os dois e nunca renderiza a query bruta.
+
+    O link não mora mais no menu: é a pílula fixa à esquerda (`pilula-flutuante`),
+    gateada pela sessão. Sem sessão o template não renderiza o link — é o que a
+    segunda asserção abaixo garante, porque o gate é o `{% if user %}` do template.
     """
     user = asyncio.run(user_repository.create("a234563", "ALUNO"))
     _perfil_completo(user_repository, user)
@@ -59,8 +63,13 @@ def test_nav_linka_para_o_sgtu_com_origem_saga(client, session_manager, signer, 
 
     html = client.get("/perfil", cookies=cookie).text
 
+    assert 'class="pilula-flutuante"' in html
     assert f"{_Settings.SGTU_URL}/tickets/novo?origem=saga&rota=/perfil" in html
-    assert 'icon("ticket", 16)' in (TEMPLATES / "base.html").read_text(encoding="utf-8")
+    assert 'icon("ticket", 24)' in (TEMPLATES / "base.html").read_text(encoding="utf-8")
+
+    # Sem sessão o portal redireciona para /login e a pílula não aparece.
+    anonimo = client.get("/perfil").text
+    assert "pilula-flutuante" not in anonimo
 
 
 def test_portal_com_perfil_incompleto_redireciona_para_perfil(client, session_manager, signer, user_repository):
