@@ -31,8 +31,33 @@ REDIS_ACL_URL="redis://saga_readonly:saga-dev-ro@localhost:6379" \
   das portas 8000/3001/3002 livres — o gate recusa porta ocupada, senão valida um servidor
   que não subiu com o código atual.
 
+## Design system (Light Clay)
+
+- Especificação: `design-system/saga/MASTER.md`; `design-system/saga/pages/*.md` **override** por
+  página (login, portal, perfil, error).
+- Fonte de verdade em código: `design/tokens.json` (primitive→semantic→component) → regenerar com
+  `node .opencode/skills/design-system/scripts/generate-tokens.cjs --config design/tokens.json -o app/static/tokens.css`
+  (rodar de `saga/`). `tokens.css` é **versionado**: o saga não tem build step.
+- `.opencode/` é gitignored. O comando exato que gerou o `MASTER.md` está registrado nele — é o que
+  torna o design system reproduzível sem a skill.
+- Ícones: sprite Phosphor bold embutido no shell (`app/templates/_icons.html`) + macro
+  `icon(name, size, title)` de `app/templates/_macros.html`. Escalas fixas 14/16/20/24; ampliar o
+  sprite **aditivamente por onda**, junto ao uso que o pede.
+- Regressão: `tests/test_design_system.py` — nenhum hex fora de `tokens.css`, nenhum `style="..."`
+  em template, nenhum emoji, escalas de ícone, `prefers-reduced-motion`, `:focus-visible`,
+  `tokens.css` coerente com o JSON.
+
 ## Armadilhas verificadas
 
+- **O gerador de tokens emite `--duration-*` e `--easing-*`.** Escrever `--dur-*`/`--ease-*` em
+  `base.css` produz transições inválidas — foi o bug da Wave 6 do sgoa.
+- **`[hidden]` precisa de `display: none !important`** (`base.css`): os componentes clay são
+  `display:flex`, e sem isso o `hidden` do JS só muda o tipo de display e o estado continua visível.
+- **Não escrever tags Jinja dentro de comentário HTML.** `{% macro %}` num `<!-- -->` em
+  `_icons.html` quebrou o parse com "Unexpected end of template".
+- **Os testes de página pinam HTML, não CSS**: `value="UNDEFINIDO" selected` (ordem dos atributos),
+  `data-role="PROFESSOR"`, `name="departamento"`, `const ALLOWED_BY_ROLE = <json>;` parseável, e as
+  strings "indisponível"/"negar acesso" do portal. Reescrever template pode quebrar as quatro.
 - **`gen` do claim vem do store, nunca do signer.** `session_manager.create` devolve
   `(sid, gen)` e `signer.sign(..., gen)` recebe esse gen. Se o signer inventasse o gen, o
   verifier compararia valores diferentes e toda request real de sgoa/sgrf daria

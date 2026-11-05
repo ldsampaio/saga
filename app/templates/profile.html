@@ -1,7 +1,8 @@
 {% extends "base.html" %}
+{% from "_macros.html" import icon %}
 {% block title %}Perfil — SAGA{% endblock %}
 {% block content %}
-<div class="card">
+<div class="cartao">
   <h1>Preencher dados de usuário</h1>
   <p class="sub">
     {% if user.role_base == 'ALUNO' %}
@@ -11,49 +12,54 @@
     {% endif %}
   </p>
 
+  <div class="alerta alerta--erro" id="alerta" role="alert" tabindex="-1" hidden>
+    {{ icon("warning", 20) }}
+    <span id="alertaTexto"></span>
+  </div>
+
   <form id="profileForm" novalidate>
-    <div class="field">
+    <div class="campo campo--obrigatorio">
       <label for="name">Nome</label>
       <input id="name" name="name" type="text" required value="{{ user.name or '' }}">
     </div>
-    <div class="field">
+
+    <div class="campo">
       <label for="email">E-mail</label>
       <input id="email" name="email" type="email" value="{{ user.email or '' }}">
     </div>
 
-    <div class="field">
+    <div class="campo campo--obrigatorio">
       <label for="role_base">Papel</label>
-      <select id="role_base" name="role_base">
+      <select id="role_base" name="role_base" required>
         {% for r in ['ALUNO', 'PROFESSOR', 'UNDEFINIDO'] %}
           <option value="{{ r }}" {% if user.role_base == r %}selected{% endif %}>{{ r }}</option>
         {% endfor %}
       </select>
     </div>
 
-    <div class="field">
+    <div class="campo" data-role="*">
       <label for="matricula">Matrícula</label>
       <input id="matricula" name="matricula" type="text" value="{{ profile.matricula if profile else '' }}">
     </div>
 
-    <div class="field" data-role="ALUNO">
+    <div class="campo" data-role="ALUNO">
       <label for="curso">Curso</label>
       <input id="curso" name="curso" type="text" value="{{ profile.curso if profile else '' }}">
     </div>
-    <div class="field" data-role="ALUNO">
+    <div class="campo" data-role="ALUNO">
       <label for="programa_pos">Programa de pós</label>
       <input id="programa_pos" name="programa_pos" type="text" value="{{ profile.programa_pos if profile else '' }}">
     </div>
-    <div class="field" data-role="ALUNO">
+    <div class="campo" data-role="ALUNO">
       <label for="data_matricula">Data de matrícula</label>
       <input id="data_matricula" name="data_matricula" type="date" value="{{ profile.data_matricula if profile else '' }}">
     </div>
-    <div class="field" data-role="PROFESSOR">
+    <div class="campo" data-role="PROFESSOR">
       <label for="departamento">Departamento</label>
       <input id="departamento" name="departamento" type="text" value="{{ profile.departamento if profile else '' }}">
     </div>
 
-    <button type="submit">Salvar</button>
-    <p class="error" id="error"></p>
+    <button type="submit" class="botao botao--primario botao--bloco">Salvar</button>
   </form>
 </div>
 
@@ -61,7 +67,8 @@
   const ALLOWED_BY_ROLE = {{ allowed_by_role | tojson }};
   const REQUIRED_BY_ROLE = {{ required_by_role | tojson }};
   const form = document.getElementById('profileForm');
-  const error = document.getElementById('error');
+  const alerta = document.getElementById('alerta');
+  const alertaTexto = document.getElementById('alertaTexto');
 
   function applyRole() {
     const role = document.getElementById('role_base').value;
@@ -69,32 +76,55 @@
     const obrigatorios = REQUIRED_BY_ROLE[role] || [];
     form.querySelectorAll('[data-role]').forEach((el) => {
       const campo = el.querySelector('input').name;
-      const mostra = permitidos.includes(campo);
-      el.style.display = mostra ? 'block' : 'none';
-      // Marca o que o backend exige para fechar o perfil: sem isto o usuário recebe
-      // "campo obrigatório" de um input que a tela escondeu.
-      const obrigatorio = mostra && obrigatorios.includes(campo);
-      el.querySelector('input').required = obrigatorio;
-      el.classList.toggle('field--required', obrigatorio);
+      const mostra = el.dataset.role === '*' || permitidos.includes(campo);
+      // Visibilidade por classe, nunca style inline (regra do MASTER).
+      el.classList.toggle('campo--oculto', !mostra);
+      const input = el.querySelector('input');
+      input.required = mostra && obrigatorios.includes(campo);
+      el.classList.toggle('campo--obrigatorio', input.required);
     });
   }
+
   document.getElementById('role_base').addEventListener('change', applyRole);
   applyRole();
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    error.textContent = '';
+    alertaTexto.textContent = '';
+    alerta.hidden = true;
+    form.querySelectorAll('.campo--erro').forEach((el) => el.classList.remove('campo--erro'));
+
     const body = {};
     for (const el of form.querySelectorAll('input, select')) body[el.name] = el.value || null;
+
     const res = await fetch('/api/auth/profile', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
       credentials: 'include',
     });
-    if (res.status === 200) { window.location.href = '/'; return; }
+
+    if (res.status === 200) {
+      window.location.href = '/';
+      return;
+    }
+
     const data = await res.json().catch(() => ({}));
-    error.textContent = (data.errors || [data.detail || 'Falha ao salvar.']).join(' · ');
+    const erros = data.errors || [data.detail || 'Falha ao salvar.'];
+    alertaTexto.textContent = erros.join(' · ');
+    alerta.hidden = false;
+
+    // Focus management: o foco vai para o primeiro campo inválido, não para o topo.
+    // O erro do backend é "campo obrigatório para PROFESSOR: matricula" — o nome do campo
+    // está no texto, então casar por `includes` e não por prefixo.
+    const campos = Array.from(form.querySelectorAll('input, select'));
+    const primeiro = campos.find((el) => erros.some((erro) => erro.includes(el.name)));
+    if (primeiro) {
+      primeiro.closest('.campo').classList.add('campo--erro');
+      primeiro.focus();
+    } else {
+      alerta.focus();
+    }
   });
 </script>
 {% endblock %}

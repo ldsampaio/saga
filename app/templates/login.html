@@ -1,36 +1,76 @@
 {% extends "base.html" %}
+{% from "_macros.html" import icon %}
 {% block title %}Login — SAGA{% endblock %}
 {% block content %}
-<div class="card">
-  <h1>SAGA</h1>
-  <p class="sub">Login delegado ao sistemas2 (UTFPR). A senha é usada apenas nesta requisição e não é armazenada.</p>
-  <form id="loginForm" novalidate>
-    <div class="field">
-      <label for="login">Login</label>
-      <input id="login" name="login" type="text" autocomplete="username" required autofocus>
+<div class="pagina-login">
+  <section class="hero">
+    <h1>SAGA</h1>
+    <div class="chips">
+      <div class="chip">
+        {{ icon("key", 16) }}
+        <span>A senha é usada apenas nesta requisição e não é armazenada.</span>
+      </div>
+      <div class="chip">
+        {{ icon("info", 16) }}
+        <span>O saga autentica no sistemas2 e é a única autoridade de identidade.</span>
+      </div>
+      <div class="chip">
+        {{ icon("arrow-right", 16) }}
+        <span>Os subsistemas não validam credencial: só sessão.</span>
+      </div>
     </div>
-    <div class="field">
-      <label for="password">Senha</label>
-      <input id="password" name="password" type="password" autocomplete="current-password" required>
-    </div>
-    <button type="submit" id="submitBtn">Entrar</button>
-    <p class="error" id="error"></p>
-    <p class="state" id="state"></p>
-  </form>
+  </section>
+
+  <div class="cartao caixa-login">
+    <h1>Entrar</h1>
+    <p class="sub">Login delegado ao sistemas2 (UTFPR).</p>
+
+    <form id="loginForm" novalidate>
+      <div class="campo">
+        <label for="login">Login</label>
+        <input id="login" name="login" type="text" autocomplete="username" required autofocus>
+      </div>
+      <div class="campo">
+        <label for="password">Senha</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required>
+      </div>
+
+      <button type="submit" id="submitBtn" class="botao botao--primario botao--bloco">Entrar</button>
+
+      <div class="loading" id="loading" role="status" hidden>
+        <span class="spinner" aria-hidden="true"></span>
+        <span>Entrando…</span>
+      </div>
+
+      <div class="alerta alerta--erro" id="alerta" role="alert" hidden>
+        {{ icon("warning", 20) }}
+        <span id="alertaTexto"></span>
+      </div>
+    </form>
+  </div>
 </div>
+
 <script>
   const REDIRECT = {{ redirect | tojson }};
   const form = document.getElementById('loginForm');
   const submitBtn = document.getElementById('submitBtn');
-  const error = document.getElementById('error');
-  const state = document.getElementById('state');
+  const loading = document.getElementById('loading');
+  const alerta = document.getElementById('alerta');
+  const alertaTexto = document.getElementById('alertaTexto');
+
+  function mostraAlerta(texto, tipo) {
+    alertaTexto.textContent = texto;
+    alerta.classList.remove('alerta--erro', 'alerta--limite');
+    alerta.classList.add(tipo);
+    alerta.hidden = false;
+  }
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const payload = { login: form.login.value, password: form.password.value };
     submitBtn.disabled = true;
-    error.textContent = '';
-    state.textContent = '';
+    loading.hidden = false;
+    alerta.hidden = true;
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
@@ -46,20 +86,22 @@
         return;
       }
       if (res.status === 429) {
-        state.textContent = 'Muitas tentativas. Aguarde e tente novamente.';
-        return;
-      }
-      if (res.status === 503) {
-        const data = await res.json().catch(() => ({}));
-        window.location.href = '/error?code=' + encodeURIComponent(data.code || 'UPSTREAM_UNAVAILABLE');
+        mostraAlerta('Muitas tentativas. Aguarde e tente novamente.', 'alerta--limite');
         return;
       }
       const data = await res.json().catch(() => ({}));
-      error.textContent = data.detail || 'Credenciais inválidas.';
+
+      if (res.status === 503) {
+        window.location.href = '/error?code=' + encodeURIComponent(data.code || 'UPSTREAM_UNAVAILABLE');
+        return;
+      }
+
+      mostraAlerta(data.detail || 'Credenciais inválidas.', 'alerta--erro');
     } catch (err) {
-      state.textContent = 'Falha de conexão.';
+      mostraAlerta('Falha de conexão.', 'alerta--erro');
     } finally {
       submitBtn.disabled = false;
+      loading.hidden = true;
     }
   });
 </script>

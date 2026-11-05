@@ -1,0 +1,165 @@
+/* ==========================================================================
+   SAGA — Base (reset, tipografia, layout, foco, movimento)
+   Fonte de verdade de tokens: app/static/tokens.css (gerado de design/tokens.json)
+   Design system: design-system/saga/MASTER.md (claymorphism light)
+
+   Regra: nenhum hex aqui. Todo valor de cor, raio, sombra, duração, easing,
+   espaçamento e tamanho vem de token. Breakpoints e dimensões de layout que não
+   são tokens ficam registrados no MASTER.md como exceção.
+   ========================================================================== */
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: var(--size-base);
+  line-height: 1.6;
+  background: var(--color-bg);
+  color: var(--color-text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+strong,
+b {
+  font-weight: 700;
+}
+
+/* ===== Titulos: Space Grotesk 600, hierarquia por tamanho e nao por cor ===== */
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0 0 var(--spacing-1);
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+}
+
+h1 {
+  font-size: var(--size-2xl);
+  letter-spacing: -0.02em;
+}
+
+h2 {
+  font-size: var(--size-lg);
+}
+
+h3 {
+  font-size: var(--size-base);
+}
+
+.small,
+small {
+  font-size: var(--size-sm);
+}
+
+/* ===== Links ===== */
+a {
+  color: var(--color-primary-strong);
+  font-weight: 500;
+  text-decoration: underline;
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 3px;
+}
+
+a:hover {
+  color: var(--color-primary);
+}
+
+/* ===== Foco visivel (teclado) — nunca remover sem substituto ===== */
+:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-radius: var(--radius-sm);
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+[tabindex]:focus-visible {
+  outline: var(--focus-outline);
+  outline-offset: var(--focus-offset);
+  border-radius: var(--radius-sm);
+}
+
+::selection {
+  background: var(--color-primary-tint);
+  color: var(--color-text);
+}
+
+/* `hidden` precisa vencer display:flex dos componentes, senão o estado some e o
+   JS acha que escondeu quando só mudou o tipo de display. */
+[hidden] {
+  display: none !important;
+}
+
+/* ===== Movimento: exit faster than enter, bounce so onde agrega ===== */
+button,
+a,
+.pilula {
+  transition:
+    background-color var(--duration-hover) var(--easing-out),
+    box-shadow var(--duration-hover) var(--easing-out),
+    color var(--duration-hover) var(--easing-out),
+    border-color var(--duration-hover) var(--easing-out),
+    transform var(--duration-press) var(--easing-clay);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ===== Layout do aplicativo ===== */
+.shell {
+  padding: var(--spacing-4);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-3);
+}
+
+/* ===== Ícones ===== */
+/* Decorativos: aria-hidden no markup, o rótulo leva a informação.
+   Escalas fixas 14/16/20/24 — nunca um tamanho entre as escalas. */
+.icon {
+  display: inline-block;
+  vertical-align: -0.18em;
+  color: currentColor;
+  flex: none;
+}
+
+.icon--14 { width: var(--icon-14); height: var(--icon-14); }
+.icon--16 { width: var(--icon-16); height: var(--icon-16); }
+.icon--20 { width: var(--icon-20); height: var(--icon-20); }
+.icon--24 { width: var(--icon-24); height: var(--icon-24); }
+
+/* Sprite embutido no shell: não é conteúdo, não ocupa espaço. */
+.sprite {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}

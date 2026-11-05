@@ -1,26 +1,48 @@
 {% extends "base.html" %}
+{% from "_macros.html" import icon %}
+{% set papel_icon = {"ALUNO": "graduation-cap", "PROFESSOR": "identification-card"} %}
 {% block title %}Portal — SAGA{% endblock %}
 {% block content %}
 {% if not heartbeat_alive %}
-  <div class="banner">
-    <strong>Serviço de autenticação indisponível.</strong>
-    <p class="state">Os subsistemas vão negar acesso enquanto o SAGA não estiver respondendo.</p>
+  <div class="alerta alerta--erro" role="alert">
+    {{ icon("warning", 20) }}
+    <div>
+      <strong>Serviço de autenticação indisponível.</strong>
+      <p>Os subsistemas vão negar acesso enquanto o SAGA não estiver respondendo.</p>
+    </div>
   </div>
 {% endif %}
 
-<h1>Portal</h1>
-<p class="sub">{{ user.login }}{% if user.name %} — {{ user.name }}{% endif %} ({{ user.role_base }})</p>
+<div class="cartao cartao--larga">
+  <h1>Portal</h1>
+  <p class="sub">
+    {{ user.login }}{% if user.name %} — {{ user.name }}{% endif %}
+    <span class="pilula pilula--papel-{{ user.role_base | lower }}">
+      {{ icon(papel_icon.get(user.role_base, "info"), 14) }} {{ user.role_base }}
+    </span>
+  </p>
 
-<div class="grid">
-  {% for s in subsystems %}
-    <a class="tile" href="{{ s.url }}">
-      <strong>{{ s.name }}</strong>
-      <span>Abre com a sessão já ativa.</span>
-    </a>
-  {% endfor %}
+  {% if subsystems %}
+    <div class="grid">
+      {% for s in subsystems %}
+        <a class="tile" href="{{ s.url }}">
+          <span class="tile-icon">{{ icon("squares", 20) }}</span>
+          <span class="tile-texto">
+            <strong>{{ s.name }}</strong>
+            <span>Abre com a sessão já ativa.</span>
+          </span>
+        </a>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="linha-vazia">
+      {{ icon("info", 20) }}
+      <span>Nenhum subsistema configurado.</span>
+    </div>
+  {% endif %}
+
+  <form method="post" action="/api/auth/logout">
+    <button type="submit" class="botao">{{ icon("sign-out", 16) }} Sair</button>
+  </form>
 </div>
-
-<form method="post" action="/api/auth/logout" style="margin-top:24px; max-width:480px;">
-  <button type="submit">Sair</button>
-</form>
 {% endblock %}
