@@ -1,0 +1,18 @@
+{#
+  Macros do design system SAGA (Light Clay).
+  Wave 0: só `icon`. As demais assinaturas (.cartao, .botao, .campo, .pilula,
+  .alerta, .tile) entram por onda junto ao uso que as pede.
+
+  Regras do MASTER.md:
+   - escalas de ícone fixas: 14 | 16 | 20 | 24;
+   - decorativo = aria-hidden, o rótulo leva a informação;
+   - ícone com title é significativo: role="img" + aria-label;
+   - nenhum emoji como ícone estrutural.
+#}
+
+{% macro icon(name, size=20, title='') -%}
+<svg class="icon icon--{{ size }}" viewBox="0 0 256 256" fill="currentColor"
+  {% if title %}role="img" aria-label="{{ title }}"{% else %}aria-hidden="true"{% endif %} focusable="false">
+  <use href="#i-{{ name }}"></use>
+</svg>
+{%- endmacro %}

@@ -56,3 +56,6 @@ dist/
 build/
 *.egg-info/
 .eggs/
+
+# UI/UX Skills
+.opencode
