@@ -196,6 +196,14 @@ esperado.
   disabled/loading/empty.
 - **Wave 6 (done):** QA — `styles.css` (dark slate) removido, `tests/test_design_system.py` com o
   checklist acima, AGENTS.md com a seção do design system. 81 testes verdes, ruff limpo.
+- **Wave 7 (done):** ponto de entrada do ticket saiu do menu e virou `.pilula-flutuante` (PR #5).
+- **Wave 7 — teto de largura: TENTADO E REVERTIDO (PR #6 → revert PR #7).** Não reintroduzir sem
+  decisão do dono. A regra era `--content-max` = soma dos componentes da linha mais larga (4 tiles
+  de 220 + 3 gaps de 12 = 916) com navbar e shell alinhados a esse teto. Na prática o portal é um
+  `.cartao--larga` de `--card-max-width` (480), então o teto de 916 governava navbar, shell e
+  cartão ao mesmo tempo: o cabeçalho ficava mais largo que o conteúdo e a página inteira encolhia
+  em telas grandes. Estado atual: `--grid-max-width` 640, navbar de largura total da tela, `.shell`
+  sem teto, login sem exemption. As outras três plataformas mantêm o teto — o rollback é só do saga.
 
 ---
 
