@@ -55,6 +55,12 @@ REDIS_ACL_URL="redis://saga_readonly:saga-dev-ro@localhost:6379" \
   `display:flex`, e sem isso o `hidden` do JS só muda o tipo de display e o estado continua visível.
 - **Não escrever tags Jinja dentro de comentário HTML.** `{% macro %}` num `<!-- -->` em
   `_icons.html` quebrou o parse com "Unexpected end of template".
+- **O venv de `sa/saga` pode carregar shebang de outro venv.** `.venv/bin/uvicorn` apontava para o
+  venv do clone antigo (`Projetos/saga/.venv`), que não tem `asyncpg`: rodar `.venv/bin/uvicorn` cai
+  com `ModuleNotFoundError: No module named 'asyncpg'` enquanto
+  `.venv/bin/python -c "import asyncpg"` funciona — porque o interpretador do script é o de outro
+  venv. `uv run uvicorn` acerta o venv; o caminho direto não. Shebangs corrigidos em
+  `sa/saga/.venv/bin` (não versionado).
 - **Os testes de página pinam HTML, não CSS**: `value="UNDEFINIDO" selected` (ordem dos atributos),
   `data-role="PROFESSOR"`, `name="departamento"`, `const ALLOWED_BY_ROLE = <json>;` parseável, e as
   strings "indisponível"/"negar acesso" do portal. Reescrever template pode quebrar as quatro.
