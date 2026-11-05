@@ -1,15 +1,22 @@
 {% extends "base.html" %}
+{% from "_macros.html" import icon %}
 {% block title %}Acesso negado — SAGA{% endblock %}
 {% block content %}
-<div class="card">
+<div class="cartao">
   <h1>Acesso negado</h1>
-  <div class="banner">
-    <strong>{{ message }}</strong>
-    <p class="state">Código: <code>{{ code }}</code></p>
+
+  <div class="alerta alerta--erro">
+    {{ icon("warning", 20) }}
+    <div>
+      <strong>{{ message }}</strong>
+      <p>Código: <code>{{ code }}</code></p>
+    </div>
   </div>
-  <p class="state">Nenhum dado interno, identificador de sessão ou conteúdo do token é exibido.</p>
-  <div style="margin-top:18px;">
-    <button type="button" onclick="window.location.reload()">Tentar de novo</button>
-  </div>
+
+  <p class="sub">Nenhum dado interno, identificador de sessão ou conteúdo do token é exibido.</p>
+
+  <button type="button" class="botao" onclick="window.location.reload()">
+    {{ icon("arrow-right", 16) }} Tentar de novo
+  </button>
 </div>
 {% endblock %}
