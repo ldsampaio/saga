@@ -140,7 +140,8 @@ se aplica. **`@media (prefers-reduced-motion: reduce)` é obrigatório** (`base.
 | `.pilula` | bg tingida por estado, border-2 ink, ícone 14px + rótulo |
 | `.alerta` | flex com ícone 20px; erro = red-100/red-800; sucesso = mint; dica = canvas; limite = amber |
 | `.tile` | clay card border-3, tile pastel rotativo (sky/amber/lilac/mint) com ícone 20; nome em Space Grotesk; `cursor: pointer` |
-| `.navbar` | **floating clay card** (sticky top 12px), bg card, border-3, nav items pill; ativo = primary-soft + border primary |
+| `.navbar` | **floating clay card** (sticky top 12px), bg card, border-3, nav items pill; ativo = primary-soft + border primary. **Teto de largura**: `calc(--content-max-width + 2×--spacing-4)`, centralizado — alinha com o conteúdo em vez de esticar até a tela |
+| `.shell` | coluna central limitada pelo mesmo teto. `--content-max-width` = soma dos componentes da linha mais larga do portal: 4 tiles de 220 + 3 gaps de 12 = **916** (+ padding 2×24). Login fica fora do teto (split `--hero-width` + `--card-max-width`) |
 | `.pilula-flutuante` | pílula CTA **fixa à esquerda** (centro vertical; canto inferior em ≤767 px), ícone 24 + rótulo — o ícone nunca é o único portador de informação. Dimensões de token, sem px cru fora de `@media` |
 | `.pagina-login` | split: hero com trama weave decorativa + `caixa-login` clay + chips pastel |
 | `.spinner` | 28px, `0.9s ease-in-out`, `role="status"` + rótulo textual |
