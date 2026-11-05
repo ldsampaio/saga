@@ -272,12 +272,7 @@
   justify-content: space-between;
   gap: var(--spacing-2);
   min-height: var(--navbar-height);
-  /* Teto de largura: soma dos componentes da linha mais larga do portal
-     (4 tiles de 220 + 3 gaps de 12 = 916) mais o padding do shell. O cabeçalho
-     alinha com o conteúdo em vez de esticar até a tela inteira. */
-  width: calc(100% - 2 * var(--spacing-4));
-  max-width: calc(var(--content-max-width) + 2 * var(--spacing-4));
-  margin: var(--navbar-sticky-top) auto 0;
+  margin: var(--navbar-sticky-top) var(--spacing-4) 0;
   padding: 0 var(--spacing-3);
   background: var(--navbar-bg);
   color: var(--navbar-fg);
