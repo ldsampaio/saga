@@ -35,7 +35,7 @@ motivo visual.
 |---|---|---|
 | Credencial inválida | `.alerta.erro` + `warning` | red-100 / red-800 |
 | 429 limite | `.alerta.limite` + `clock` | amber, com o tempo de espera quando o backend o devolve |
-| 503 indisponível | `.alerta.erro` + `warning` | red-100 / red-800, **sem** expor causa interna |
+| 503 indisponível | navega para `/error`, que renderiza `.alerta.erro` + `warning` | red-100 / red-800, **sem** expor causa interna |
 
 Mensagem de credencial inválida permanece genérica ("Login ou senha inválidos") — nunca "usuário
 existe, senha não". T10 vale também aqui: nada de credencial em estado, log ou resposta.

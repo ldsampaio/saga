@@ -18,7 +18,7 @@ tipografia, aplicado ao stack do saga
 **Stack:** FastAPI + Jinja server-rendered, CSS puro tokenizado. **Sem build step, sem Tailwind,
 sem lib de ícones JS, sem GSAP, sem lib de gráficos.**
 **Dials:** Variance 4/10 | Motion 4/10 | Density 6/10
-**Última atualização:** 2026-11-05 (Wave 0 implemented)
+**Última atualização:** 2026-11-05 (Waves 0–6 implementadas)
 
 **Provenance do arquivo:** gerado por
 `python3 .opencode/skills/ui-ux-pro-max/scripts/search.py "educational system claymorphism cards vibrant engaging colors" --design-system --variance 4 --motion 4 --density 6 -p "SAGA" --persist --output-dir <raiz-do-saga>`
@@ -151,17 +151,20 @@ se aplica. **`@media (prefers-reduced-motion: reduce)` é obrigatório** (`base.
 Verificável mecanicamente por `tests/test_design_system.py` — o saga tem a vantagem de não
 precisar de navegador para isso.
 
-- [ ] Nenhum hex em `app/static/*.css` fora de `tokens.css`
-- [ ] Nenhum `style="..."` em `app/templates/*.html` (exceção: `:style` dinâmico de percentual, que o saga não usa)
-- [ ] Nenhum emoji como ícone estrutural
-- [ ] `base.html` linka `tokens.css` + `base.css` + `components.css` e tem `preconnect`
-- [ ] Todo `<svg>` decorativo com `aria-hidden="true"`; ícone significativo com `role="img"` + `aria-label`
-- [ ] Contraste de texto ≥ 4.5:1 no light clay
-- [ ] Foco visível em todos os controles (`:focus-visible`, ring indigo)
-- [ ] `prefers-reduced-motion` respeitado
-- [ ] Touch targets ≥ 44px em controles primários
-- [ ] `cursor: pointer` em todo elemento clicável
-- [ ] States disabled/loading/empty estilizados
+- [x] Nenhum hex em `app/static/*.css` fora de `tokens.css` (verificado por teste; `styles.css` do
+      dark slate foi removido)
+- [x] Nenhum `style="..."` em `app/templates/*.html` (verificado por teste)
+- [x] Nenhum emoji como ícone estrutural (verificado por teste)
+- [x] `base.html` linka `tokens.css` + `base.css` + `components.css` e tem `preconnect` + `display=swap`
+- [x] Todo `<svg>` decorativo com `aria-hidden="true"`; ícone significativo com `role="img"` + `aria-label`
+- [x] Contraste de texto ≥ 4.5:1 no light clay (valores verificados no SGOA: ink 16.0, muted 5.81,
+      CTA branco 5.2, destructive branco 6.47, tiles 9.1–13.8)
+- [x] Foco visível em todos os controles (`:focus-visible`, ring indigo)
+- [x] `prefers-reduced-motion` respeitado (`base.css`)
+- [~] Touch targets ≥ 44px em controles primários. Exceção documentada: `.pilula` 26px
+      (`--pill-min-height`) — pílula de papel não é controle primário.
+- [x] `cursor: pointer` em todo elemento clicável
+- [x] States disabled/loading/empty estilizados (`.botao:disabled`, `.spinner`, `.linha-vazia`)
 - [ ] Testado visualmente em 375 / 768 / 1024 / 1440 px — **pendência de ambiente**: não há
       navegador headless aqui. Cobertura estática dos breakpoints 767/1023.
 
@@ -173,15 +176,20 @@ precisar de navegador para isso.
 ## 4. Ondas
 
 - **Wave 0 (done):** `.opencode` no `.gitignore`; `MASTER.md` + `pages/`; `design/tokens.json` →
-  `app/static/tokens.css`; `base.css` (reset, tipografia, foco, movimento, escala de ícones);
-  sprite + macro `icon()`.
-- **Wave 1:** shell — `base.html` com header clay flutuante, nav em pílula, sprite embutido.
-- **Wave 2:** login — split hero + `caixa-login` clay, `.alerta` com ícone para erro/429/503.
-- **Wave 3:** portal — `.tile` clay com tile pastel por subsystem, banner de heartbeat como `.alerta`.
-- **Wave 4:** perfil — `.campo` clay, select clay, required marker, visibilidade por papel via
-  **classe** em vez de `el.style.display`.
-- **Wave 5:** erro / acesso negado + estados disabled/loading/empty.
-- **Wave 6:** QA — checklist acima preenchido, `tests/test_design_system.py`, ruff.
+  `app/static/tokens.css`; `base.css` (reset, tipografia, foco, movimento, `[hidden]`, escala de
+  ícones); sprite + macro `icon()`.
+- **Wave 1 (done):** shell — `base.html` com navbar clay flutuante, nav em pílula, sprite embutido,
+  três `<link>`, fontes via `preconnect` + `display=swap`.
+- **Wave 2 (done):** login — split hero + `caixa-login` clay, `.alerta` com ícone para erro/429,
+  spinner de envio com `role="status"`, botão com offset-shadow e press.
+- **Wave 3 (done):** portal — `.tile` clay com tile pastel rotativo por posição, pílula de papel,
+  banner de indisponibilidade como `.alerta`, `.linha-vazia` sem subsystem.
+- **Wave 4 (done):** perfil — `.campo` clay, select clay, `.campo--obrigatorio`, visibilidade por
+  papel via classe (`.campo--oculto`), `.campo--erro` + foco no primeiro campo inválido.
+- **Wave 5 (done):** erro / acesso negado em `.alerta` clay; `style="..."` removido; estados
+  disabled/loading/empty.
+- **Wave 6 (done):** QA — `styles.css` (dark slate) removido, `tests/test_design_system.py` com o
+  checklist acima, AGENTS.md com a seção do design system. 81 testes verdes, ruff limpo.
 
 ---
 
