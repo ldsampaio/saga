@@ -11,7 +11,9 @@ Regras:
  - `base.html` linka os três CSS e carrega fonte via `<link>` + preconnect, nunca `@import`;
  - ícone decorativo é `aria-hidden`; ícone significativo tem `role="img"` + `aria-label`;
  - escalas de ícone fixas 14/16/20/24;
- - `prefers-reduced-motion` respeitado.
+ - `prefers-reduced-motion` respeitado;
+ - teto de largura: navbar, shell e pílula usam `--content-ceiling` (decisão do dono,
+   2026-11-06); o login tem teto próprio `--login-ceiling` aplicado só ao header.
 """
 
 from __future__ import annotations
@@ -116,6 +118,34 @@ def test_px_somente_em_breakpoints():
             continue
         achados = re.findall(r"\d+px", corpo)
         assert not achados, f"px hardcoded fora de breakpoint em {seletor.strip()}: {achados}"
+
+
+def test_teto_de_largura_e_o_mesmo_para_navbar_shell_e_pilula():
+    """Decisão do dono (2026-11-06): o cabeçalho e a pílula alinham com o bloco de
+    conteúdo. `--content-ceiling` é o único teto — navbar, shell e pílula o usam. É o
+    regresso do PR #6 com o valor do bloco real (640).
+
+    O login é a única exemption: lá o teto é o do próprio split (hero + caixa),
+    `--login-ceiling`, usado por header e conteúdo juntos — nada na tela de login muda
+    além do tamanho do cabeçalho."""
+    tokens = (STATIC / "tokens.css").read_text(encoding="utf-8")
+    assert "--content-ceiling" in tokens, "token de teto de largura ausente"
+    assert "--login-ceiling" in tokens, "token de teto do login ausente"
+
+    componentes = (STATIC / "components.css").read_text(encoding="utf-8")
+    base = (STATIC / "base.css").read_text(encoding="utf-8")
+    # Âncora no início de linha: pega a regra base, não o ajuste fino do breakpoint.
+    for seletor, texto in ((".navbar", componentes), (".pilula-flutuante", componentes),
+                           (".shell", base)):
+        bloco = re.search(rf"^{re.escape(seletor)}\s*\{{([^{{}}]*)\}}", texto, re.MULTILINE)
+        assert bloco, f"{seletor} não tem regra base"
+        assert "var(--content-ceiling)" in bloco.group(1), f"{seletor} não usa o teto"
+    bloco_login_shell = re.search(r"^body\.pagina-login \.shell\s*\{([^{}]*)\}", base, re.MULTILINE)
+    bloco_login_navbar = re.search(r"^body\.pagina-login \.navbar\s*\{([^{}]*)\}", base, re.MULTILINE)
+    assert bloco_login_shell and "max-width: none" in bloco_login_shell.group(1), \
+        "no login o conteúdo mantém a largura própria do split"
+    assert bloco_login_navbar and "var(--login-ceiling)" in bloco_login_navbar.group(1), \
+        "no login o header alinha com o bloco do split"
 
 
 def test_o_css_antigo_nao_sobrevive():

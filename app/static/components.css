@@ -272,7 +272,11 @@
   justify-content: space-between;
   gap: var(--spacing-2);
   min-height: var(--navbar-height);
-  margin: var(--navbar-sticky-top) var(--spacing-4) 0;
+  /* Teto de largura: o bloco de conteúdo mais o padding do shell. O cabeçalho alinha
+     com os blocos em vez de esticar até a tela inteira. */
+  width: calc(100% - 2 * var(--spacing-4));
+  max-width: var(--content-ceiling);
+  margin: var(--navbar-sticky-top) auto 0;
   padding: 0 var(--spacing-3);
   background: var(--navbar-bg);
   color: var(--navbar-fg);
@@ -323,14 +327,16 @@
 }
 
 /* ===== Pílula flutuante (ponto de entrada do SGTU, onda 7) ===== */
-/* Fixa, fora do menu. Dimensões vêm de token (sem px cru); o rótulo acompanha o
+/* Fixa, fora do menu, mas dentro do teto de largura da plataforma: o lado direito
+   encosta na coluna de conteúdo, então a pílula fica à esquerda do bloco e não no
+   extremo da tela. Dimensões vêm de token (sem px cru); o rótulo acompanha o
    ícone porque o ícone nunca é o único portador de informação. Foco e movimento
    são os globais de base.css (:focus-visible, prefers-reduced-motion). */
 .pilula-flutuante {
   position: fixed;
-  left: var(--spacing-4);
+  left: calc((100vw - var(--content-ceiling)) / 2 - var(--spacing-2));
   top: 50%;
-  transform: translateY(-50%);
+  transform: translate(-100%, -50%);
   display: inline-flex;
   align-items: center;
   gap: var(--spacing-1);
@@ -353,7 +359,7 @@
 }
 
 .pilula-flutuante:active {
-  transform: translateY(calc(-50% + var(--button-press-offset)));
+  transform: translate(-100%, calc(-50% + var(--button-press-offset)));
   box-shadow: var(--button-shadow-press);
 }
 
@@ -465,27 +471,33 @@
   }
 
   .navbar {
-    margin: var(--navbar-sticky-top) var(--spacing-3) 0;
+    width: calc(100% - 2 * var(--spacing-3));
+    margin: var(--navbar-sticky-top) auto 0;
     flex-wrap: wrap;
   }
 
   .shell {
     padding: var(--spacing-3);
-    /* Folga embaixo: em 375 px a pílula fixa cruza a coluna de conteúdo. */
-    padding-bottom: var(--spacing-7);
-  }
-
-  /* Estreito: a pílula desce para o canto inferior esquerdo, onde não cobre
-     texto. Acima de 767 px ela fica no centro vertical à esquerda. */
-  .pilula-flutuante {
-    top: auto;
-    bottom: var(--spacing-4);
-    transform: none;
   }
 }
 
 @media (max-width: 1023px) {
   .grid {
     grid-template-columns: 1fr;
+  }
+
+  /* Calha estreita: abaixo de 1024 px a calha esquerda não comporta a pílula
+     (~100 px + folga), então ela desce para o canto inferior da coluna, onde não
+     cobre texto. O lado esquerdo continua o teto, nunca o extremo da tela. */
+  .pilula-flutuante {
+    left: max(var(--spacing-3), calc((100vw - var(--content-ceiling)) / 2));
+    top: auto;
+    bottom: var(--spacing-4);
+    transform: none;
+  }
+
+  /* Folga embaixo: a pílula no canto inferior cruza a coluna de conteúdo. */
+  .shell {
+    padding-bottom: var(--spacing-7);
   }
 }
