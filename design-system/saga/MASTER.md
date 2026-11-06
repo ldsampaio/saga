@@ -170,8 +170,10 @@ precisar de navegador para isso.
       (`--pill-min-height`) — pílula de papel não é controle primário.
 - [x] `cursor: pointer` em todo elemento clicável
 - [x] States disabled/loading/empty estilizados (`.botao:disabled`, `.spinner`, `.linha-vazia`)
-- [ ] Testado visualmente em 375 / 768 / 1024 / 1440 px — **pendência de ambiente**: não há
-      navegador headless aqui. Cobertura estática dos breakpoints 767/1023.
+- [ ] Testado visualmente em 375 / 768 / 1024 / 1440 px — **pendência de ambiente**: o
+      navegador headless existe em `sa/scripts/headless`, mas o harness serve só os dists de
+      sgoa, sgrf e sgtu; o saga (Jinja, sem build) não está coberto. Cobertura estática dos
+      breakpoints 767/1023.
 
 **Exceções registradas** (dimensões de layout que não são tokens): breakpoints 767/1023px.
 `max-width` de card (`--card-max-width` 480px) e de grid (`--grid-max-width` 640px) foram
