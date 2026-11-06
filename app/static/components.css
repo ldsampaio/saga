@@ -412,6 +412,11 @@
      nada: a linha tem a altura do próprio conteúdo. */
   align-items: center;
   padding: var(--spacing-5) var(--spacing-4);
+  /* O bloco não pode passar do próprio teto, não importa como o shell o dimensiona:
+     tracks 520 + 480 + gap 32 + padding 2×24 = --login-ceiling. É o que garante que a
+     borda do bloco e a do header sejam a mesma linha. */
+  max-width: var(--login-ceiling);
+  margin: 0 auto;
 }
 
 .hero {
