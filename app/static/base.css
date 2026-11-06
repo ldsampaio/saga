@@ -133,12 +133,34 @@ a,
 /* ===== Layout do aplicativo ===== */
 .shell {
   padding: var(--spacing-4);
+  /* Mesmo teto do cabeçalho: o bloco de conteúdo (640) mais o padding lateral.
+     Navbar, shell e pílula flutuante usam --content-ceiling — é o que os alinha. */
+  max-width: var(--content-ceiling);
+  margin: 0 auto;
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: var(--spacing-3);
+}
+
+/* Login: o header entra no teto, mas o restante da interface fica como estava. O teto
+   do login não é o bloco do Portal (640), é o próprio bloco do split — hero 520 + caixa
+   480 + gap 32 + padding lateral 2×24 = 1080 (--login-ceiling). O shell do login segue
+   sem teto, então as colunas mantêm a largura de sempre e, como shell e navbar são ambos
+   centralizados, o cabeçalho encosta exatamente na borda do bloco.
+
+   O hook do body é `login`, não `pagina-login`: `pagina-login` é o selector do componente
+   (o split). Usá-lo no body fazia a regra de componente casar com o body, que virava grid
+   com as duas colunas do split — o header caía na coluna 1 e o shell na coluna 2, lado a
+   lado, em vez de ficar em cima. */
+body.login .navbar {
+  max-width: var(--login-ceiling);
+}
+
+body.login .shell {
+  max-width: none;
 }
 
 /* ===== Ícones ===== */

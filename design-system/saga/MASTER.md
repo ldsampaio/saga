@@ -140,9 +140,10 @@ se aplica. **`@media (prefers-reduced-motion: reduce)` é obrigatório** (`base.
 | `.pilula` | bg tingida por estado, border-2 ink, ícone 14px + rótulo |
 | `.alerta` | flex com ícone 20px; erro = red-100/red-800; sucesso = mint; dica = canvas; limite = amber |
 | `.tile` | clay card border-3, tile pastel rotativo (sky/amber/lilac/mint) com ícone 20; nome em Space Grotesk; `cursor: pointer` |
-| `.navbar` | **floating clay card** (sticky top 12px), bg card, border-3, nav items pill; ativo = primary-soft + border primary |
-| `.pilula-flutuante` | pílula CTA **fixa à esquerda** (centro vertical; canto inferior em ≤767 px), ícone 24 + rótulo — o ícone nunca é o único portador de informação. Dimensões de token, sem px cru fora de `@media` |
-| `.pagina-login` | split: hero com trama weave decorativa + `caixa-login` clay + chips pastel |
+| `.navbar` | **floating clay card** (sticky top 12px), bg card, border-3, nav items pill; ativo = primary-soft + border primary. **Teto de largura**: `--content-ceiling`, centralizado — alinha com o bloco de conteúdo em vez de esticar até a tela |
+| `.shell` | coluna central limitada pelo mesmo teto. `--content-ceiling` = `--content-max-width` (640, o bloco real do Portal) + padding lateral 2×24 = **688**. No login o shell fica sem teto — as colunas do split mantêm a largura própria. O hook do body é `login`: `pagina-login` é o selector do componente e não pode ser usado no body |
+| `.pilula-flutuante` | pílula CTA fixa, **dentro do teto**: o lado direito encosta na coluna de conteúdo (centro vertical), ícone 24 + rótulo — o ícone nunca é o único portador de informação. Quando a calha esquerda não comporta a pílula (≤1023 px), desce para o canto inferior da coluna, onde não cobre texto. Dimensões de token, sem px cru fora de `@media` |
+| `.pagina-login` | split: hero com trama weave decorativa + `caixa-login` clay + chips pastel. Teto próprio `--login-ceiling` = hero 520 + caixa 480 + gap 32 + padding 2×24 = **1080**, usado só pelo header; o conteúdo do login não muda |
 | `.spinner` | 28px, `0.9s ease-in-out`, `role="status"` + rótulo textual |
 
 ---
@@ -169,8 +170,10 @@ precisar de navegador para isso.
       (`--pill-min-height`) — pílula de papel não é controle primário.
 - [x] `cursor: pointer` em todo elemento clicável
 - [x] States disabled/loading/empty estilizados (`.botao:disabled`, `.spinner`, `.linha-vazia`)
-- [ ] Testado visualmente em 375 / 768 / 1024 / 1440 px — **pendência de ambiente**: não há
-      navegador headless aqui. Cobertura estática dos breakpoints 767/1023.
+- [ ] Testado visualmente em 375 / 768 / 1024 / 1440 px — **pendência de ambiente**: o
+      navegador headless existe em `sa/scripts/headless`, mas o harness serve só os dists de
+      sgoa, sgrf e sgtu; o saga (Jinja, sem build) não está coberto. Cobertura estática dos
+      breakpoints 767/1023.
 
 **Exceções registradas** (dimensões de layout que não são tokens): breakpoints 767/1023px.
 `max-width` de card (`--card-max-width` 480px) e de grid (`--grid-max-width` 640px) foram
@@ -197,13 +200,16 @@ esperado.
 - **Wave 6 (done):** QA — `styles.css` (dark slate) removido, `tests/test_design_system.py` com o
   checklist acima, AGENTS.md com a seção do design system. 81 testes verdes, ruff limpo.
 - **Wave 7 (done):** ponto de entrada do ticket saiu do menu e virou `.pilula-flutuante` (PR #5).
-- **Wave 7 — teto de largura: TENTADO E REVERTIDO (PR #6 → revert PR #7).** Não reintroduzir sem
-  decisão do dono. A regra era `--content-max` = soma dos componentes da linha mais larga (4 tiles
-  de 220 + 3 gaps de 12 = 916) com navbar e shell alinhados a esse teto. Na prática o portal é um
-  `.cartao--larga` de `--card-max-width` (480), então o teto de 916 governava navbar, shell e
-  cartão ao mesmo tempo: o cabeçalho ficava mais largo que o conteúdo e a página inteira encolhia
-  em telas grandes. Estado atual: `--grid-max-width` 640, navbar de largura total da tela, `.shell`
-  sem teto, login sem exemption. As outras três plataformas mantêm o teto — o rollback é só do saga.
+- **Wave 7 — teto de largura: TENTADO E REVERTIDO (PR #6 → revert PR #7), REINTRODUZIDO por
+  decisão do dono em 2026-11-06.** O PR #6 usava a soma dos componentes (4 tiles de 220 + 3 gaps
+  de 12 = 916) com navbar e shell alinhados a esse teto, e foi revertido porque o portal é um
+  `.cartao--larga` de `--grid-max-width` (640): o teto de 916 governava navbar, shell e cartão ao
+  mesmo tempo, e o cabeçalho ficava mais largo que o conteúdo. Decisão do dono: o teto é o bloco
+  real — `--content-max-width` 640, `--content-ceiling` 688 (640 + padding lateral 2×24) — usado
+  por navbar, `.shell` e `.pilula-flutuante`. O login tem teto próprio (`--login-ceiling` 1080, a
+  caixa do split hero 520 + caixa-login 480 + gap 32 + padding 2×24) aplicado só ao header: o
+  conteúdo do login mantém a largura de sempre, então a tela de login não muda — só o cabeçalho.
+  As outras três plataformas já alinhavam com o próprio bloco; o saga era a única exceção.
 
 ---
 

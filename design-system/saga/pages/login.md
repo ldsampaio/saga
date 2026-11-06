@@ -4,8 +4,10 @@
 
 ## Composição
 
-- **Split**: hero (esquerda, 520px) + `caixa-login` clay (direita, 480px). Em ≤767px o hero vira
-  faixa superior de 240px e a caixa fica abaixo.
+- **Split**: hero (esquerda, 520px) + `caixa-login` clay (direita, 480px), **mesma altura** — o grid
+  estica as células, então o hero encosta na altura da caixa; os chips preenchem o espaço restante
+  (o gap `--spacing-3` é o mínimo). Em ≤767px o hero vira faixa superior de 240px e a caixa fica
+  abaixo, e cada linha tem a altura do próprio conteúdo.
 - Hero: trama weave decorativa em `--color-brand` (pseudo-elemento, fora da árvore de
   acessibilidade), chips pastel (`sky`/`amber`/`lilac`/`mint`) com ícone 16 + rótulo. O **weave** é
   decorativo; o texto do hero é informação e continua legível — o ícone é `aria-hidden`, o rótulo
@@ -39,6 +41,29 @@ motivo visual.
 
 Mensagem de credencial inválida permanece genérica ("Login ou senha inválidos") — nunca "usuário
 existe, senha não". T10 vale também aqui: nada de credencial em estado, log ou resposta.
+
+## Ritmo da caixa (fronteiras verticais)
+
+Um valor por tipo de fronteira, para a caixa não herdar as margens gerais do `.cartao`
+(valem para portal e perfil e deixam a caixa do login com ritmos diferentes):
+
+| Fronteira | Token | Valor |
+|---|---|---|
+| título → subtítulo | `--spacing-1` | 8 |
+| subtítulo → campos | `--spacing-4` | 24 |
+| campo → campo | `--spacing-2` | 12 |
+| campos → botão | `--spacing-2` sobre o gap do form | 24 |
+| botão → estado (loading/alerta) | `--spacing-3` | 16 |
+
+No hero: título → chips `--spacing-4` (24), chips entre si `--spacing-3` (16), chip padding
+`--spacing-2`/`--spacing-3`. O ícone do chip é `flex: none` — o rótulo leva a largura restante.
+
+O `<script>` do login fica em `{% block scripts %}` de `base.html`, depois de `</main>`: o
+`<main>` é só markup, o comportamento não entra na árvore de conteúdo.
+
+O hook de página é `body.login`. `pagina-login` é o selector do **componente** (o split) e não
+pode ser usado como classe do body: a regra de componente casaria com o body, que viraria grid com
+as duas colunas do split, e o header entraria na faixa do split em vez de ficar acima.
 
 ## Redirect
 

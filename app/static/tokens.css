@@ -193,7 +193,10 @@
   --alert-dica-bg: var(--color-surface-muted);
   --alert-limite-bg: var(--color-accent-amber);
   --hero-width: 520px;
-  --grid-max-width: 640px;
+  --login-ceiling: calc(var(--hero-width) + var(--card-max-width) + var(--spacing-5) + 2 * var(--spacing-4));
+  --content-max-width: 640px;
+  --content-ceiling: calc(var(--content-max-width) + 2 * var(--spacing-4));
+  --grid-max-width: var(--content-max-width);
   --tile-border: 3px solid var(--color-border);
   --tile-radius: var(--radius-md);
   --tile-shadow: var(--shadow-flat);

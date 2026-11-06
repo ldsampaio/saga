@@ -272,7 +272,11 @@
   justify-content: space-between;
   gap: var(--spacing-2);
   min-height: var(--navbar-height);
-  margin: var(--navbar-sticky-top) var(--spacing-4) 0;
+  /* Teto de largura: o bloco de conteúdo mais o padding do shell. O cabeçalho alinha
+     com os blocos em vez de esticar até a tela inteira. */
+  width: calc(100% - 2 * var(--spacing-4));
+  max-width: var(--content-ceiling);
+  margin: var(--navbar-sticky-top) auto 0;
   padding: 0 var(--spacing-3);
   background: var(--navbar-bg);
   color: var(--navbar-fg);
@@ -323,14 +327,16 @@
 }
 
 /* ===== Pílula flutuante (ponto de entrada do SGTU, onda 7) ===== */
-/* Fixa, fora do menu. Dimensões vêm de token (sem px cru); o rótulo acompanha o
+/* Fixa, fora do menu, mas dentro do teto de largura da plataforma: o lado direito
+   encosta na coluna de conteúdo, então a pílula fica à esquerda do bloco e não no
+   extremo da tela. Dimensões vêm de token (sem px cru); o rótulo acompanha o
    ícone porque o ícone nunca é o único portador de informação. Foco e movimento
    são os globais de base.css (:focus-visible, prefers-reduced-motion). */
 .pilula-flutuante {
   position: fixed;
-  left: var(--spacing-4);
+  left: calc((100vw - var(--content-ceiling)) / 2 - var(--spacing-2));
   top: 50%;
-  transform: translateY(-50%);
+  transform: translate(-100%, -50%);
   display: inline-flex;
   align-items: center;
   gap: var(--spacing-1);
@@ -353,7 +359,7 @@
 }
 
 .pilula-flutuante:active {
-  transform: translateY(calc(-50% + var(--button-press-offset)));
+  transform: translate(-100%, calc(-50% + var(--button-press-offset)));
   box-shadow: var(--button-shadow-press);
 }
 
@@ -400,8 +406,16 @@
   display: grid;
   grid-template-columns: minmax(0, var(--hero-width)) minmax(0, var(--card-max-width));
   gap: var(--spacing-5);
-  align-items: start;
+  /* Mesma altura nas duas colunas: o grid estica as células, então o hero encosta na
+     altura da caixa de login. Em uma coluna só (≤767) cada linha tem a altura do próprio
+     conteúdo, então não muda nada. */
+  align-items: stretch;
   padding: var(--spacing-5) var(--spacing-4);
+  /* O bloco não pode passar do próprio teto, não importa como o shell o dimensiona:
+     tracks 520 + 480 + gap 32 + padding 2×24 = --login-ceiling. É o que garante que a
+     borda do bloco e a do header sejam a mesma linha. */
+  max-width: var(--login-ceiling);
+  margin: 0 auto;
 }
 
 .hero {
@@ -411,6 +425,10 @@
   border-radius: var(--card-radius);
   background: var(--color-primary-soft);
   box-shadow: var(--card-shadow);
+  /* Esticado pelo grid: o conteúdo precisa se distribuir, senão o hero fica com o
+     bloco de chips top-alignado e espaço vazio embaixo. */
+  display: flex;
+  flex-direction: column;
 }
 
 /* Trama weave decorativa — nunca porta informação */
@@ -428,32 +446,77 @@
 
 .hero h1 {
   font-size: var(--size-hero);
-  margin-bottom: var(--spacing-3);
+  margin-bottom: var(--spacing-4);
 }
 
 .chips {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-2);
+  gap: var(--spacing-3);
+  /* O hero estica para a altura da caixa: os chips preenchem o espaço restante em vez
+     de ficar agrupados no topo. O gap é o mínimo; o excedente distribui entre eles. */
+  flex: 1;
+  justify-content: space-between;
 }
 
 .chip {
   display: flex;
   align-items: center;
   gap: var(--spacing-2);
-  padding: var(--spacing-1) var(--spacing-2);
+  padding: var(--spacing-2) var(--spacing-3);
   border: var(--pill-border);
   border-radius: var(--pill-radius);
   font-size: var(--size-sm);
+}
+
+.chip .icon {
+  flex: none;
+}
+
+.chip span {
+  flex: 1;
 }
 
 .chip:nth-child(1) { background: var(--color-accent-sky); }
 .chip:nth-child(2) { background: var(--color-accent-amber); }
 .chip:nth-child(3) { background: var(--color-accent-lilac); }
 
+/* Caixa de login: ritmo próprio, um valor por tipo de fronteira — título→subtítulo 8,
+   subtítulo→campos 24, campo→campo 12, campos→ação 24, ação→estado 16. Sem isso a
+   caixa herda as margens gerais do .cartao (que valem para portal e perfil) e os blocos
+   ficam com ritmos diferentes: 8, 24, 24, 12, 12. */
 .caixa-login {
   position: relative;
   z-index: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.caixa-login h1 {
+  margin-bottom: var(--spacing-1);
+}
+
+.caixa-login .sub {
+  margin-bottom: var(--spacing-4);
+}
+
+.caixa-login form {
+  margin-top: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.caixa-login .campo {
+  margin-bottom: var(--spacing-2);
+}
+
+.caixa-login .botao {
+  margin-top: var(--spacing-2);
+}
+
+.caixa-login .loading,
+.caixa-login .alerta {
+  margin-top: var(--spacing-3);
 }
 
 /* ===== Breakpoints (excecao registrada no MASTER: nao sao tokens) ===== */
@@ -465,27 +528,33 @@
   }
 
   .navbar {
-    margin: var(--navbar-sticky-top) var(--spacing-3) 0;
+    width: calc(100% - 2 * var(--spacing-3));
+    margin: var(--navbar-sticky-top) auto 0;
     flex-wrap: wrap;
   }
 
   .shell {
     padding: var(--spacing-3);
-    /* Folga embaixo: em 375 px a pílula fixa cruza a coluna de conteúdo. */
-    padding-bottom: var(--spacing-7);
-  }
-
-  /* Estreito: a pílula desce para o canto inferior esquerdo, onde não cobre
-     texto. Acima de 767 px ela fica no centro vertical à esquerda. */
-  .pilula-flutuante {
-    top: auto;
-    bottom: var(--spacing-4);
-    transform: none;
   }
 }
 
 @media (max-width: 1023px) {
   .grid {
     grid-template-columns: 1fr;
+  }
+
+  /* Calha estreita: abaixo de 1024 px a calha esquerda não comporta a pílula
+     (~100 px + folga), então ela desce para o canto inferior da coluna, onde não
+     cobre texto. O lado esquerdo continua o teto, nunca o extremo da tela. */
+  .pilula-flutuante {
+    left: max(var(--spacing-3), calc((100vw - var(--content-ceiling)) / 2));
+    top: auto;
+    bottom: var(--spacing-4);
+    transform: none;
+  }
+
+  /* Folga embaixo: a pílula no canto inferior cruza a coluna de conteúdo. */
+  .shell {
+    padding-bottom: var(--spacing-7);
   }
 }
