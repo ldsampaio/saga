@@ -132,6 +132,14 @@ def test_teto_de_largura_e_o_mesmo_para_navbar_shell_e_pilula():
     assert "--content-ceiling" in tokens, "token de teto de largura ausente"
     assert "--login-ceiling" in tokens, "token de teto do login ausente"
 
+    # O teto do login é derivado das peças do próprio split, não um número solto. Um
+    # valor arbitrário (1100px, por exemplo) desalinha o header do bloco — é exatamente
+    # o problema que apareceu quando o teto do login foi confundido com o do Portal.
+    definicao = re.search(r"--login-ceiling:\s*([^;]+);", tokens)
+    assert definicao, "login-ceiling não é um calc derivado dos tokens"
+    for parte in ("--hero-width", "--card-max-width", "--spacing-5", "--spacing-4"):
+        assert parte in definicao.group(1), f"login-ceiling não deriva de {parte}"
+
     componentes = (STATIC / "components.css").read_text(encoding="utf-8")
     base = (STATIC / "base.css").read_text(encoding="utf-8")
     # Âncora no início de linha: pega a regra base, não o ajuste fino do breakpoint.
