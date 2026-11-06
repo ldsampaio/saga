@@ -61,6 +61,10 @@ No hero: título → chips `--spacing-4` (24), chips entre si `--spacing-3` (16)
 O `<script>` do login fica em `{% block scripts %}` de `base.html`, depois de `</main>`: o
 `<main>` é só markup, o comportamento não entra na árvore de conteúdo.
 
+O hook de página é `body.login`. `pagina-login` é o selector do **componente** (o split) e não
+pode ser usado como classe do body: a regra de componente casaria com o body, que viraria grid com
+as duas colunas do split, e o header entraria na faixa do split em vez de ficar acima.
+
 ## Redirect
 
 O `REDIRECT` renderizado no template é o destino pós-login. O campo é lido pelo JS e não ganha

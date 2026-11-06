@@ -148,12 +148,21 @@ def test_teto_de_largura_e_o_mesmo_para_navbar_shell_e_pilula():
         bloco = re.search(rf"^{re.escape(seletor)}\s*\{{([^{{}}]*)\}}", texto, re.MULTILINE)
         assert bloco, f"{seletor} não tem regra base"
         assert "var(--content-ceiling)" in bloco.group(1), f"{seletor} não usa o teto"
-    bloco_login_shell = re.search(r"^body\.pagina-login \.shell\s*\{([^{}]*)\}", base, re.MULTILINE)
-    bloco_login_navbar = re.search(r"^body\.pagina-login \.navbar\s*\{([^{}]*)\}", base, re.MULTILINE)
+    bloco_login_shell = re.search(r"^body\.login \.shell\s*\{([^{}]*)\}", base, re.MULTILINE)
+    bloco_login_navbar = re.search(r"^body\.login \.navbar\s*\{([^{}]*)\}", base, re.MULTILINE)
     assert bloco_login_shell and "max-width: none" in bloco_login_shell.group(1), \
         "no login o conteúdo mantém a largura própria do split"
     assert bloco_login_navbar and "var(--login-ceiling)" in bloco_login_navbar.group(1), \
         "no login o header alinha com o bloco do split"
+
+    # O hook do body não pode ser o nome do componente: `pagina-login` é o selector do
+    # split, e se o body também tiver essa classe a regra de componente casa com o body,
+    # que vira grid com as duas colunas — header e conteúdo lado a lado.
+    login = (TEMPLATES / "login.html").read_text(encoding="utf-8")
+    hook = re.search(r"{%\s*block body_class\s*%\}([^%]+){%\s*endblock\s*%\}", login)
+    assert hook, "login.html sem block body_class"
+    assert hook.group(1).strip() != "pagina-login", \
+        "body_class do login não pode ser o nome do componente (.pagina-login)"
 
 
 def test_o_css_antigo_nao_sobrevive():

@@ -149,12 +149,17 @@ a,
    do login não é o bloco do Portal (640), é o próprio bloco do split — hero 520 + caixa
    480 + gap 32 + padding lateral 2×24 = 1080 (--login-ceiling). O shell do login segue
    sem teto, então as colunas mantêm a largura de sempre e, como shell e navbar são ambos
-   centralizados, o cabeçalho encosta exatamente na borda do bloco. */
-body.pagina-login .navbar {
+   centralizados, o cabeçalho encosta exatamente na borda do bloco.
+
+   O hook do body é `login`, não `pagina-login`: `pagina-login` é o selector do componente
+   (o split). Usá-lo no body fazia a regra de componente casar com o body, que virava grid
+   com as duas colunas do split — o header caía na coluna 1 e o shell na coluna 2, lado a
+   lado, em vez de ficar em cima. */
+body.login .navbar {
   max-width: var(--login-ceiling);
 }
 
-body.pagina-login .shell {
+body.login .shell {
   max-width: none;
 }
 
