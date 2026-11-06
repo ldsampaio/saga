@@ -406,11 +406,10 @@
   display: grid;
   grid-template-columns: minmax(0, var(--hero-width)) minmax(0, var(--card-max-width));
   gap: var(--spacing-5);
-  /* As duas colunas têm alturas diferentes (hero: título + 3 chips; caixa: título + sub
-     + campos + botão + estado). Centralizadas entre si o bloco lê como um par, não como
-     duas colunas top-alignadas de tamanho desigual. Em uma coluna só (≤767) não muda
-     nada: a linha tem a altura do próprio conteúdo. */
-  align-items: center;
+  /* Mesma altura nas duas colunas: o grid estica as células, então o hero encosta na
+     altura da caixa de login. Em uma coluna só (≤767) cada linha tem a altura do próprio
+     conteúdo, então não muda nada. */
+  align-items: stretch;
   padding: var(--spacing-5) var(--spacing-4);
   /* O bloco não pode passar do próprio teto, não importa como o shell o dimensiona:
      tracks 520 + 480 + gap 32 + padding 2×24 = --login-ceiling. É o que garante que a
@@ -426,6 +425,10 @@
   border-radius: var(--card-radius);
   background: var(--color-primary-soft);
   box-shadow: var(--card-shadow);
+  /* Esticado pelo grid: o conteúdo precisa se distribuir, senão o hero fica com o
+     bloco de chips top-alignado e espaço vazio embaixo. */
+  display: flex;
+  flex-direction: column;
 }
 
 /* Trama weave decorativa — nunca porta informação */
@@ -450,6 +453,10 @@
   display: flex;
   flex-direction: column;
   gap: var(--spacing-3);
+  /* O hero estica para a altura da caixa: os chips preenchem o espaço restante em vez
+     de ficar agrupados no topo. O gap é o mínimo; o excedente distribui entre eles. */
+  flex: 1;
+  justify-content: space-between;
 }
 
 .chip {
