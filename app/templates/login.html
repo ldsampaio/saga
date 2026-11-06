@@ -50,7 +50,9 @@
     </form>
   </div>
 </div>
+{% endblock %}
 
+{% block scripts %}
 <script>
   const REDIRECT = {{ redirect | tojson }};
   const form = document.getElementById('loginForm');

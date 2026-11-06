@@ -434,32 +434,73 @@
 
 .hero h1 {
   font-size: var(--size-hero);
-  margin-bottom: var(--spacing-3);
+  margin-bottom: var(--spacing-4);
 }
 
 .chips {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-2);
+  gap: var(--spacing-3);
 }
 
 .chip {
   display: flex;
   align-items: center;
   gap: var(--spacing-2);
-  padding: var(--spacing-1) var(--spacing-2);
+  padding: var(--spacing-2) var(--spacing-3);
   border: var(--pill-border);
   border-radius: var(--pill-radius);
   font-size: var(--size-sm);
+}
+
+.chip .icon {
+  flex: none;
+}
+
+.chip span {
+  flex: 1;
 }
 
 .chip:nth-child(1) { background: var(--color-accent-sky); }
 .chip:nth-child(2) { background: var(--color-accent-amber); }
 .chip:nth-child(3) { background: var(--color-accent-lilac); }
 
+/* Caixa de login: ritmo próprio, um valor por tipo de fronteira — título→subtítulo 8,
+   subtítulo→campos 24, campo→campo 12, campos→ação 24, ação→estado 16. Sem isso a
+   caixa herda as margens gerais do .cartao (que valem para portal e perfil) e os blocos
+   ficam com ritmos diferentes: 8, 24, 24, 12, 12. */
 .caixa-login {
   position: relative;
   z-index: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.caixa-login h1 {
+  margin-bottom: var(--spacing-1);
+}
+
+.caixa-login .sub {
+  margin-bottom: var(--spacing-4);
+}
+
+.caixa-login form {
+  margin-top: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.caixa-login .campo {
+  margin-bottom: var(--spacing-2);
+}
+
+.caixa-login .botao {
+  margin-top: var(--spacing-2);
+}
+
+.caixa-login .loading,
+.caixa-login .alerta {
+  margin-top: var(--spacing-3);
 }
 
 /* ===== Breakpoints (excecao registrada no MASTER: nao sao tokens) ===== */
