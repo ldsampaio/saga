@@ -406,7 +406,11 @@
   display: grid;
   grid-template-columns: minmax(0, var(--hero-width)) minmax(0, var(--card-max-width));
   gap: var(--spacing-5);
-  align-items: start;
+  /* As duas colunas têm alturas diferentes (hero: título + 3 chips; caixa: título + sub
+     + campos + botão + estado). Centralizadas entre si o bloco lê como um par, não como
+     duas colunas top-alignadas de tamanho desigual. Em uma coluna só (≤767) não muda
+     nada: a linha tem a altura do próprio conteúdo. */
+  align-items: center;
   padding: var(--spacing-5) var(--spacing-4);
 }
 

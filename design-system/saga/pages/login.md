@@ -4,8 +4,10 @@
 
 ## Composição
 
-- **Split**: hero (esquerda, 520px) + `caixa-login` clay (direita, 480px). Em ≤767px o hero vira
-  faixa superior de 240px e a caixa fica abaixo.
+- **Split**: hero (esquerda, 520px) + `caixa-login` clay (direita, 480px), **centralizadas entre si**
+  (`align-items: center`) — as alturas diferem, e top-alignar fazia o bloco ler como duas colunas de
+  tamanho desigual. Em ≤767px o hero vira faixa superior de 240px e a caixa fica abaixo (numa coluna
+  só o centralizado não altera nada: a linha tem a altura do próprio conteúdo).
 - Hero: trama weave decorativa em `--color-brand` (pseudo-elemento, fora da árvore de
   acessibilidade), chips pastel (`sky`/`amber`/`lilac`/`mint`) com ícone 16 + rótulo. O **weave** é
   decorativo; o texto do hero é informação e continua legível — o ícone é `aria-hidden`, o rótulo
